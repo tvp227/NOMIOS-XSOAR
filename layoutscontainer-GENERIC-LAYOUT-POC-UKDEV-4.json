@@ -1,0 +1,820 @@
+{
+	"cacheVersn": 0,
+	"close": null,
+	"definitionId": "",
+	"description": "Generic incident landing page. HTML incident overview hero panel with supporting context sections below.",
+	"detached": false,
+	"details": null,
+	"detailsV2": {
+		"TypeName": "",
+		"tabs": [
+			{
+				"hidden": true,
+				"id": "summary",
+				"name": "Legacy Summary",
+				"type": "summary"
+			},
+			{
+				"id": "caseinfoid",
+				"name": "OVERVIEW",
+				"sections": [
+					{
+						"displayType": "CARD",
+						"h": 6,
+						"hideItemTitleOnlyOne": true,
+						"hideName": true,
+						"i": "caseinfoid-field-changed-caseinfoid-8f14c1a0-0001-4a7b-9c21-3d5e6f7a8b01",
+						"isVisible": true,
+						"items": [
+							{
+								"endCol": 4,
+								"fieldId": "incidentoverview",
+								"height": 106,
+								"id": "b729b54f-4c80-4fb2-aa90-17b8a5b7e89d",
+								"index": 0,
+								"sectionItemType": "field",
+								"startCol": 0
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "Incident Overview",
+						"static": false,
+						"w": 2,
+						"wrapLabels": true,
+						"x": 0,
+						"y": 2
+					},
+					{
+						"displayType": "ROW",
+						"h": 3,
+						"hideName": false,
+						"i": "caseinfoid-field-changed-caseinfoid-8f14c1a0-0002-4a7b-9c21-3d5e6f7a8b02",
+						"isVisible": true,
+						"items": [
+							{
+								"dropEffect": "move",
+								"endCol": 2,
+								"fieldId": "severity",
+								"height": 26,
+								"id": "incident-severity-field",
+								"index": 0,
+								"listId": "caseinfoid-8f14c1a0-0002-4a7b-9c21-3d5e6f7a8b02",
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 2,
+								"fieldId": "type",
+								"height": 26,
+								"id": "incident-type-field",
+								"index": 1,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 2,
+								"fieldId": "owner",
+								"height": 26,
+								"id": "incident-owner-field",
+								"index": 2,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 2,
+								"fieldId": "playbookid",
+								"height": 26,
+								"id": "incident-playbookId-field",
+								"index": 3,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 2,
+								"fieldId": "sourcebrand",
+								"height": 26,
+								"id": "incident-sourceBrand-field",
+								"index": 4,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 2,
+								"fieldId": "sourceinstance",
+								"height": 26,
+								"id": "incident-sourceInstance-field",
+								"index": 5,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 2,
+								"fieldId": "remediationsla",
+								"height": 26,
+								"id": "5536628b-b2be-4c02-9627-f54069e94c3b",
+								"index": 6,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"args": {
+									"new": {
+										"simple": "",
+										"userMarkedRequired": true
+									},
+									"old": {
+										"simple": "",
+										"userMarkedRequired": true
+									}
+								},
+								"buttonClass": null,
+								"dropEffect": "move",
+								"endCol": 1,
+								"fieldId": "",
+								"height": 44,
+								"hexColor": "#ff0000",
+								"id": "799ea87a-e200-42eb-bc62-f7e7c84ca113",
+								"index": 7,
+								"listId": "caseinfoid-5c8eada7-c698-473d-a289-e4d66f63ca13",
+								"name": "SLA CHANGE",
+								"scriptId": "889959a5-2bf9-4061-885d-4d7c86354b15",
+								"sectionItemType": "button",
+								"startCol": 0
+							},
+							{
+								"args": {},
+								"buttonClass": null,
+								"dropEffect": "move",
+								"endCol": 2,
+								"fieldId": "",
+								"height": 44,
+								"hexColor": "#a08353",
+								"id": "5da95723-a726-4267-bdaf-907fd8f23b5a",
+								"index": 8,
+								"listId": "caseinfoid-8f14c1a0-0002-4a7b-9c21-3d5e6f7a8b02",
+								"name": "ASSIGNATION",
+								"scriptId": "AssignToMeButton",
+								"sectionItemType": "button",
+								"startCol": 1
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "Case Details",
+						"static": false,
+						"w": 1,
+						"x": 2,
+						"y": 0
+					},
+					{
+						"displayType": "CARD",
+						"h": 2,
+						"hideName": false,
+						"i": "caseinfoid-field-changed-caseinfoid-8f14c1a0-0003-4a7b-9c21-3d5e6f7a8b03",
+						"isVisible": true,
+						"items": [
+							{
+								"endCol": 1,
+								"fieldId": "dbotcreated",
+								"height": 26,
+								"id": "incident-created-field",
+								"index": 0,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 1,
+								"fieldId": "occurred",
+								"height": 26,
+								"id": "incident-occurred-field",
+								"index": 1,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 1,
+								"fieldId": "dbotduedate",
+								"height": 26,
+								"id": "incident-dueDate-field",
+								"index": 2,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 2,
+								"fieldId": "dbotmodified",
+								"height": 26,
+								"id": "incident-modified-field",
+								"index": 0,
+								"sectionItemType": "field",
+								"startCol": 1
+							},
+							{
+								"endCol": 2,
+								"fieldId": "dbotclosed",
+								"height": 26,
+								"id": "incident-closed-field",
+								"index": 1,
+								"sectionItemType": "field",
+								"startCol": 1
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "Timeline",
+						"static": false,
+						"w": 2,
+						"x": 0,
+						"y": 10
+					},
+					{
+						"displayType": "ROW",
+						"h": 2,
+						"hideName": false,
+						"i": "caseinfoid-field-changed-caseinfoid-8f14c1a0-0007-4a7b-9c21-3d5e6f7a8b07",
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "Indicators",
+						"query": "",
+						"queryType": "input",
+						"static": false,
+						"type": "indicators",
+						"w": 3,
+						"x": 0,
+						"y": 8
+					},
+					{
+						"displayType": "ROW",
+						"h": 2,
+						"hideName": false,
+						"i": "caseinfoid-field-changed-caseinfoid-8f14c1a0-0009-4a7b-9c21-3d5e6f7a8b09",
+						"isVisible": true,
+						"items": [
+							{
+								"endCol": 2,
+								"fieldId": "closereason",
+								"height": 26,
+								"id": "incident-closeReason-field",
+								"index": 0,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 2,
+								"fieldId": "closenotes",
+								"height": 52,
+								"id": "incident-closeNotes-field",
+								"index": 1,
+								"sectionItemType": "field",
+								"startCol": 0
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "Closing Information",
+						"static": false,
+						"w": 1,
+						"x": 2,
+						"y": 10
+					},
+					{
+						"displayType": "ROW",
+						"h": 2,
+						"hideName": false,
+						"i": "caseinfoid-field-changed-caseinfoid-8f14c1a0-0010-4a7b-9c21-3d5e6f7a8b10",
+						"isVisible": true,
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "Linked Incidents",
+						"static": false,
+						"type": "linkedIncidents",
+						"w": 3,
+						"x": 0,
+						"y": 12
+					},
+					{
+						"displayType": "CARD",
+						"h": 5,
+						"hideName": true,
+						"i": "caseinfoid-field-changed-caseinfoid-5c8eada7-c698-473d-a289-e4d66f63ca13",
+						"items": [
+							{
+								"dropEffect": "move",
+								"endCol": 2,
+								"fieldId": "aisummary",
+								"height": 106,
+								"id": "05288f5b-efa3-4202-ade8-c10876542aaa",
+								"index": 0,
+								"listId": "caseinfoid-5c8eada7-c698-473d-a289-e4d66f63ca13",
+								"sectionItemType": "field",
+								"startCol": 0
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "INCIDENT PANEL",
+						"static": false,
+						"w": 1,
+						"wrapLabels": true,
+						"x": 2,
+						"y": 3
+					},
+					{
+						"displayType": "CARD",
+						"h": 2,
+						"hideItemTitleOnlyOne": true,
+						"hideName": true,
+						"i": "caseinfoid-field-changed-caseinfoid-dab4abeb-a322-442a-8767-7615e6f8779b",
+						"items": [
+							{
+								"dropEffect": "move",
+								"endCol": 4,
+								"fieldId": "customercontext",
+								"height": 106,
+								"id": "c0ed1e1e-31c7-4109-b72d-2ec4a9a322e4",
+								"index": 0,
+								"listId": "caseinfoid-field-changed-caseinfoid-dab4abeb-a322-442a-8767-7615e6f8779b",
+								"sectionItemType": "field",
+								"startCol": 0
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "New Section",
+						"static": false,
+						"w": 2,
+						"x": 0,
+						"y": 0
+					}
+				],
+				"type": "custom"
+			},
+			{
+				"hidden": false,
+				"id": "vz896m41fr",
+				"name": "QUERY DATA",
+				"sections": [
+					{
+						"displayType": "CARD",
+						"h": 25,
+						"hideItemTitleOnlyOne": true,
+						"hideName": false,
+						"i": "vz896m41fr-dd85392f-f34b-4742-ac48-e2a196be73db",
+						"items": [
+							{
+								"endCol": 6,
+								"fieldId": "investigationresultcodeblock",
+								"height": 106,
+								"id": "0ea044d1-8272-4ec7-aa26-c4e475900ecd",
+								"index": 0,
+								"sectionItemType": "field",
+								"startCol": 0
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"minW": 3,
+						"moved": false,
+						"name": "QUERY RESULTS",
+						"static": false,
+						"w": 3,
+						"x": 0,
+						"y": 2
+					},
+					{
+						"displayType": "CARD",
+						"h": 2,
+						"hideName": true,
+						"i": "vz896m41fr-bb2dac92-9f13-4f08-9466-34a743f20d1b",
+						"items": [
+							{
+								"endCol": 2,
+								"fieldId": "sockqlquery",
+								"height": 53,
+								"id": "88f54c65-9a06-4962-817d-7642d8208bcc",
+								"index": 0,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 2,
+								"fieldId": "kqlqueryeditor",
+								"height": 106,
+								"id": "a029eb91-2d23-4801-8810-ab277d6c1003",
+								"index": 1,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"args": {
+									"query": {
+										"simple": "${incident.kqlqueryeditor}"
+									},
+									"source_instance": {
+										"simple": "WC_Tyrell_SoC_LAW"
+									}
+								},
+								"buttonClass": "CLEAR",
+								"endCol": 2,
+								"fieldId": "",
+								"height": 26,
+								"hexColor": null,
+								"id": "ef9e173e-35a2-45c4-afef-bef95f5d491e",
+								"index": 2,
+								"name": "TRIGGER SEARCH",
+								"scriptId": "07dbe6e3-32e9-43ea-88bc-615d9e8eb825",
+								"sectionItemType": "button",
+								"startCol": 0
+							}
+						],
+						"maxH": null,
+						"maxW": 1,
+						"minH": 1,
+						"minW": 1,
+						"moved": false,
+						"name": "KQL CONFIG",
+						"static": false,
+						"w": 1,
+						"wrapLabels": true,
+						"x": 0,
+						"y": 0
+					},
+					{
+						"h": 2,
+						"hideName": true,
+						"i": "vz896m41fr-e1f6b51d-1d8e-4b45-940b-dcc9ea10fd8c",
+						"items": [],
+						"maxH": null,
+						"maxW": 2,
+						"minH": 1,
+						"minW": 2,
+						"moved": false,
+						"name": "Malicious or Suspicious Indicators",
+						"query": "",
+						"queryType": "input",
+						"static": false,
+						"type": "indicators",
+						"w": 2,
+						"x": 1,
+						"y": 0
+					}
+				],
+				"type": "custom"
+			},
+			{
+				"hidden": false,
+				"id": "f0lonkdjov",
+				"name": "INCIDENT TRIAGE",
+				"sections": [
+					{
+						"displayType": "ROW",
+						"h": 2,
+						"hideItemTitleOnlyOne": true,
+						"hideName": false,
+						"i": "f0lonkdjov-13428e9e-422d-42fb-84bb-89aadf4b7679",
+						"items": [
+							{
+								"dropEffect": "move",
+								"endCol": 2,
+								"fieldId": "closereason",
+								"height": 26,
+								"id": "36cb82b5-a4cf-42b9-81a0-d2d6bd22d4d2",
+								"index": 0,
+								"listId": "f0lonkdjov-13428e9e-422d-42fb-84bb-89aadf4b7679",
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"endCol": 2,
+								"fieldId": "closenotes",
+								"height": 52,
+								"id": "e1ef0f31-7406-4b15-a4eb-ead9cd1c97c2",
+								"index": 1,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"args": {
+									"assignto": {
+										"simple": "${incident.owner}"
+									},
+									"closeNotes": {
+										"simple": "${incident.closeNotes}",
+										"userMarkedRequired": false
+									},
+									"closeReason": {
+										"simple": "${incident.closeReason}",
+										"userMarkedRequired": false
+									}
+								},
+								"buttonClass": "error",
+								"endCol": 2,
+								"fieldId": "",
+								"height": 44,
+								"hexColor": null,
+								"id": "c313bfdd-a430-4d48-b071-6ff46db99521",
+								"index": 2,
+								"name": "CLOSE INCIDENT",
+								"scriptId": "Builtin|||closeInvestigation",
+								"sectionItemType": "button",
+								"startCol": 0
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "CLOSING NOTE",
+						"static": false,
+						"w": 1,
+						"x": 2,
+						"y": 4
+					},
+					{
+						"displayType": "CARD",
+						"h": 9,
+						"hideItemTitleOnlyOne": true,
+						"hideName": false,
+						"i": "f0lonkdjov-36a2344e-955a-4b41-b7b2-ebce6cfd1baa",
+						"items": [
+							{
+								"dropEffect": "move",
+								"endCol": 4,
+								"fieldId": "sentinelcommentsgrid",
+								"height": 106,
+								"id": "a3bc6c96-9b75-442c-8290-796f8d0fb737",
+								"index": 0,
+								"listId": "f0lonkdjov-36a2344e-955a-4b41-b7b2-ebce6cfd1baa",
+								"sectionItemType": "field",
+								"startCol": 0
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "COMMENTS",
+						"static": false,
+						"w": 2,
+						"x": 0,
+						"y": 0
+					},
+					{
+						"displayType": "ROW",
+						"h": 2,
+						"hideName": false,
+						"i": "f0lonkdjov-e6347fef-e020-4889-868e-bbc3909e214e",
+						"items": [
+							{
+								"args": {
+									"incident_id": {
+										"simple": "${incident.incidentid}"
+									},
+									"source_technology": {
+										"simple": "sentinel"
+									},
+									"usingX": {
+										"simple": "${incident.sourceInstance}"
+									}
+								},
+								"buttonClass": null,
+								"endCol": 2,
+								"fieldId": "",
+								"height": 26,
+								"hexColor": "#43a1dd",
+								"id": "f6543592-1f9f-4466-834b-738a59f427f2",
+								"index": 0,
+								"name": "COMMENT FETCH",
+								"scriptId": "03047e20-503c-40e8-8c99-3f1b1abfaf7d",
+								"sectionItemType": "button",
+								"startCol": 0
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "SIEM SYNC",
+						"static": false,
+						"w": 1,
+						"x": 2,
+						"y": 0
+					},
+					{
+						"displayType": "CARD",
+						"h": 2,
+						"hideItemTitleOnlyOne": true,
+						"hideName": false,
+						"i": "f0lonkdjov-dda1571f-b899-4c59-9fde-b9dc679e4b31",
+						"items": [
+							{
+								"endCol": 2,
+								"fieldId": "synccomment",
+								"height": 106,
+								"id": "1bb42358-8779-48f7-9704-eca620d02937",
+								"index": 0,
+								"sectionItemType": "field",
+								"startCol": 0
+							},
+							{
+								"args": {
+									"incident_id": {
+										"simple": "${incident.incidentid}"
+									},
+									"message": {
+										"simple": "${incident.synccomment}"
+									},
+									"resource_group_name": {
+										"complex": {
+											"accessor": "incidenturl",
+											"filters": [],
+											"root": "incident",
+											"transformers": [
+												{
+													"args": {
+														"delimiter": {
+															"isContext": false,
+															"value": {
+																"simple": "resourceGroups/"
+															}
+														}
+													},
+													"operator": "split"
+												},
+												{
+													"args": {
+														"index": {
+															"isContext": false,
+															"value": {
+																"simple": "1"
+															}
+														}
+													},
+													"operator": "atIndex"
+												},
+												{
+													"args": {
+														"delimiter": {
+															"isContext": false,
+															"value": {
+																"simple": "/"
+															}
+														}
+													},
+													"operator": "split"
+												},
+												{
+													"args": {
+														"index": {
+															"isContext": false,
+															"value": {
+																"simple": "0"
+															}
+														}
+													},
+													"operator": "atIndex"
+												}
+											]
+										}
+									},
+									"subscription_id": {
+										"complex": {
+											"accessor": "incidenturl",
+											"filters": [],
+											"root": "incident",
+											"transformers": [
+												{
+													"args": {
+														"delimiter": {
+															"isContext": false,
+															"value": {
+																"simple": "subscriptions/"
+															}
+														}
+													},
+													"operator": "split"
+												},
+												{
+													"args": {
+														"index": {
+															"isContext": false,
+															"value": {
+																"simple": "1"
+															}
+														}
+													},
+													"operator": "atIndex"
+												},
+												{
+													"args": {
+														"delimiter": {
+															"isContext": false,
+															"value": {
+																"simple": "/"
+															}
+														}
+													},
+													"operator": "split"
+												},
+												{
+													"args": {
+														"index": {
+															"isContext": false,
+															"value": {
+																"simple": "0"
+															}
+														}
+													},
+													"operator": "atIndex"
+												}
+											]
+										}
+									}
+								},
+								"buttonClass": "CLEAR",
+								"dropEffect": "move",
+								"endCol": 2,
+								"fieldId": "",
+								"height": 53,
+								"hexColor": null,
+								"id": "ffa118f3-eae2-4c66-981b-0b88ba8eb55f",
+								"index": 2,
+								"listId": "f0lonkdjov-e6347fef-e020-4889-868e-bbc3909e214e",
+								"name": "SEND COMMENT",
+								"scriptId": "Azure Sentinel|||azure-sentinel-incident-add-comment",
+								"sectionItemType": "button",
+								"startCol": 0
+							}
+						],
+						"maxH": null,
+						"maxW": 3,
+						"minH": 1,
+						"moved": false,
+						"name": "SENTINEL COMMENT",
+						"static": false,
+						"w": 1,
+						"x": 2,
+						"y": 2
+					}
+				],
+				"type": "custom"
+			},
+			{
+				"hidden": false,
+				"id": "warRoom",
+				"name": "War Room",
+				"type": "warRoom"
+			},
+			{
+				"id": "workPlan",
+				"name": "Work Plan",
+				"type": "workPlan"
+			},
+			{
+				"hidden": true,
+				"id": "canvas",
+				"name": "Canvas",
+				"type": "canvas"
+			}
+		]
+	},
+	"edit": null,
+	"fromServerVersion": "",
+	"group": "incident",
+	"id": "73d911da-1b35-4820-8517-6f65b71c6bcb",
+	"indicatorsDetails": null,
+	"indicatorsQuickView": null,
+	"isOverridable": false,
+	"itemVersion": "",
+	"locked": false,
+	"mobile": null,
+	"name": "GENERIC-LAYOUT-POC-UKDEV",
+	"packID": "",
+	"packName": "",
+	"propagationLabels": [
+		"all"
+	],
+	"quickView": null,
+	"quickViewV2": null,
+	"system": false,
+	"toServerVersion": "",
+	"version": -1
+}

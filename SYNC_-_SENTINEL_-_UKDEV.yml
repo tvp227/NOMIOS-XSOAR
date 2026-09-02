@@ -1,0 +1,568 @@
+id: 99bddd7b-e01b-4aa4-8748-6560e6327052
+version: 17
+contentitemexportablefields:
+  contentitemfields:
+    packID: ""
+    packName: ""
+    itemVersion: ""
+    fromServerVersion: ""
+    toServerVersion: ""
+    propagationLabels:
+    - all
+    definitionid: ""
+    prevname: ""
+    isoverridable: false
+vcShouldKeepItemLegacyProdMachine: false
+name: SYNC - SENTINEL - UKDEV
+description: |-
+  Microsoft Sentinel ingest and investigate sub-playbook.
+
+  Responsibilities (all Sentinel-specific logic lives here):
+    1. Parse subscription / resource group / incident ID from the incident URL (once).
+    2. Pull incident entities and normalise them (SentinelEntityExtraction).
+    3. Capture the triggering analytics rule and re-run its query.
+    4. Map Sentinel severity to the canonical 1-4 priority scale.
+    5. Build the vendor-neutral CanonicalIncident object.
+
+  Output contract (consumed by GENERIC HANDLER - PARENT):
+    - CanonicalIncident   vendor-neutral incident object
+    - ExtractedEntities   flat list of entity values for indicator handling
+starttaskid: "0"
+tasks:
+  "0":
+    id: "0"
+    taskid: 522dcb30-efef-4e14-8b32-2d919b145aea
+    type: start
+    task:
+      id: 522dcb30-efef-4e14-8b32-2d919b145aea
+      version: -1
+      name: ""
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "1"
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "1":
+    id: "1"
+    taskid: 2da25397-2308-4293-81d5-8d45b720ddaa
+    type: regular
+    task:
+      id: 2da25397-2308-4293-81d5-8d45b720ddaa
+      version: -1
+      name: SET SUBSCRIPTION ID
+      description: Parses the Azure subscription ID out of the incident URL. Parsed
+        once here - downstream tasks reference Sentinel.SubscriptionId.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "2"
+    scriptarguments:
+      key:
+        simple: Sentinel.SubscriptionId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: subscriptions/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: "1"
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: "0"
+    separatecontext: false
+    continueonerrortype: errorPath
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 210
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "2":
+    id: "2"
+    taskid: a6cf0f01-cf71-420e-8957-0982c7d01a6b
+    type: regular
+    task:
+      id: a6cf0f01-cf71-420e-8957-0982c7d01a6b
+      version: -1
+      name: SET RESOURCE GROUP
+      description: Parses the resource group name out of the incident URL.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "3"
+    scriptarguments:
+      key:
+        simple: Sentinel.ResourceGroup
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: resourceGroups/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: "1"
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: "0"
+    separatecontext: false
+    continueonerrortype: errorPath
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 385
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "3":
+    id: "3"
+    taskid: a86afc73-be57-4085-8b8e-ffaa7f198b6c
+    type: regular
+    task:
+      id: a86afc73-be57-4085-8b8e-ffaa7f198b6c
+      version: -1
+      name: SET SENTINEL INCIDENT ID
+      description: Parses the Sentinel incident GUID out of the incident URL. Entity
+        retrieval and rule investigation then run in parallel.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "4"
+      - "6"
+    scriptarguments:
+      key:
+        simple: Sentinel.IncidentId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: Incidents/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: "1"
+    separatecontext: false
+    continueonerrortype: errorPath
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 560
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "4":
+    id: "4"
+    taskid: 8287806e-048b-4b56-9c8d-52f1e2bfef0f
+    type: regular
+    task:
+      id: 8287806e-048b-4b56-9c8d-52f1e2bfef0f
+      version: -1
+      name: SUMMARISE INDICATORS
+      description: Send message to Azure Open AI.
+      script: '[NOMIOS UK] Azure Open AI Service|||azure-openai-send-message'
+      type: regular
+      iscommand: true
+      brand: '[NOMIOS UK] Azure Open AI Service'
+    nexttasks:
+      '#none#':
+      - "5"
+    scriptarguments:
+      message:
+        simple: |-
+          Please summarise the findings in these indicators:
+
+          ${inputs.indicators}
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 820,
+          "y": 840
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: Microsoft Sentinel Comments
+      output:
+        complex:
+          root: AzureOpenAI
+          accessor: Analysis
+          transformers:
+          - operator: getField
+            args:
+              field:
+                value:
+                  simple: Result
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: '{'
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: '}'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: '"Summary":'
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: "1"
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "5":
+    id: "5"
+    taskid: 160b9238-de93-4dcc-aa15-601604c0d5ef
+    type: regular
+    task:
+      id: 160b9238-de93-4dcc-aa15-601604c0d5ef
+      version: -1
+      name: ADD COMMENT
+      description: Adds a comment to an incident in Azure Sentinel.
+      script: Azure Sentinel|||azure-sentinel-incident-add-comment
+      type: regular
+      iscommand: true
+      brand: Azure Sentinel
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      message:
+        complex:
+          root: AzureOpenAI
+          accessor: Analysis
+          transformers:
+          - operator: getField
+            args:
+              field:
+                value:
+                  simple: Result
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: '{'
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: '}'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: '"Summary": '
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: "1"
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      using:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 820,
+          "y": 1000
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "6":
+    id: "6"
+    taskid: 8aee0c0d-4953-4713-99cb-c832cb5a4727
+    type: regular
+    task:
+      id: 8aee0c0d-4953-4713-99cb-c832cb5a4727
+      version: -1
+      name: SUMMARISE INDICATORS
+      description: Send message to Azure Open AI.
+      script: '[NOMIOS UK] Azure Open AI Service|||azure-openai-send-message'
+      type: regular
+      iscommand: true
+      brand: '[NOMIOS UK] Azure Open AI Service'
+    nexttasks:
+      '#none#':
+      - "7"
+    scriptarguments:
+      message:
+        simple: |-
+          Please summarise the findings in these indicators:
+
+          ${inputs.ivestigation}
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 10,
+          "y": 830
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: Microsoft Sentinel Comments
+      output:
+        complex:
+          root: AzureOpenAI
+          accessor: Analysis
+          transformers:
+          - operator: getField
+            args:
+              field:
+                value:
+                  simple: Result
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: '{'
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: '}'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: '"Summary":'
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: "1"
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "7":
+    id: "7"
+    taskid: a679b3f3-da86-4c7f-bdf6-ddcb7880d121
+    type: regular
+    task:
+      id: a679b3f3-da86-4c7f-bdf6-ddcb7880d121
+      version: -1
+      name: ADD COMMENT
+      description: Adds a comment to an incident in Azure Sentinel.
+      script: Azure Sentinel|||azure-sentinel-incident-add-comment
+      type: regular
+      iscommand: true
+      brand: Azure Sentinel
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      message:
+        complex:
+          root: AzureOpenAI
+          accessor: Analysis
+          transformers:
+          - operator: getField
+            args:
+              field:
+                value:
+                  simple: Result
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: '{'
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: '}'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: '"Summary": '
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: "1"
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      using:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    continueonerrortype: ""
+    view: |-
+      {
+        "position": {
+          "x": 10,
+          "y": 1000
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 1025,
+        "width": 1190,
+        "x": 10,
+        "y": 50
+      }
+    }
+  }
+inputs:
+- key: indicators
+  value:
+    simple: ${IncidentIndicators}
+  required: false
+  description: ""
+  playbookInputQuery: null
+- key: investigation
+  value:
+    simple: ${subplaybook-3.AzureLogAnalytics.Query.Data}
+  required: false
+  description: ""
+  playbookInputQuery: null
+inputSections:
+- inputs:
+  - indicators
+  - investigation
+  name: General (Inputs group)
+  description: Generic group for inputs
+outputSections:
+- outputs:
+  - CanonicalIncident
+  - ExtractedEntities
+  name: General (Outputs group)
+  description: Generic group for outputs
+outputs:
+- contextPath: CanonicalIncident
+  description: Vendor-neutral canonical cyber security incident JSON.
+  type: unknown
+- contextPath: ExtractedEntities
+  description: Flat list of extracted entity values for indicator creation and enrichment.
+  type: unknown
+sourceplaybookid: b3e5d7f9-4a28-4c61-8b0d-6f2c9e4a7d13
+dirtyInputs: true
