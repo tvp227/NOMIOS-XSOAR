@@ -1,0 +1,130 @@
+id: 6f2a9c41-8d3e-4b57-a1c0-2e7d5b9f3a68
+version: 1
+contentitemexportablefields:
+  contentitemfields:
+    packID: ''
+    packName: ''
+    itemVersion: ''
+    fromServerVersion: ''
+    toServerVersion: ''
+    propagationLabels:
+    - all
+    definitionid: ''
+    prevname: ''
+    isoverridable: false
+vcShouldKeepItemLegacyProdMachine: false
+name: GET ENTITIES - SENTINEL - UKDEV
+description: |-
+  Loop body for Sentinel entity retrieval. Do not call directly.
+
+  Called in a loop by INGEST AND INVESTIGATE - SENTINEL with exit condition
+    AzureSentinel.IncidentEntity is not empty
+  Wait and max iterations are set on the calling task (loop settings), not here.
+  Reaching max iterations raises an error on the calling task - the caller treats that as 'no entities'.
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    taskid: 0ec52d8c-6c62-43ea-970b-32ae28554c17
+    type: start
+    task:
+      id: 0ec52d8c-6c62-43ea-970b-32ae28554c17
+      version: -1
+      name: ''
+      type: start
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '1':
+    id: '1'
+    taskid: f28dcf2d-fc24-4b21-9b0e-a229249830a4
+    type: regular
+    task:
+      id: f28dcf2d-fc24-4b21-9b0e-a229249830a4
+      version: -1
+      name: GET ENTITIES
+      description: Single fetch. The calling task loops this playbook until AzureSentinel.IncidentEntity is populated or the iteration cap is hit. Continue on error so a transient API failure counts as an empty attempt rather than aborting the loop.
+      script: Azure Sentinel|||azure-sentinel-list-incident-entities
+      iscommand: true
+      brand: Azure Sentinel
+      type: regular
+    scriptarguments:
+      incident_id:
+        simple: ${inputs.IncidentId}
+      resource_group_name:
+        simple: ${inputs.ResourceGroup}
+      subscription_id:
+        simple: ${inputs.SubscriptionId}
+      using:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    continueonerror: true
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 210
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 260,
+        "width": 755,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs:
+- key: SubscriptionId
+  value:
+    simple: ''
+  required: true
+  description: Azure subscription ID parsed from the incident URL.
+  playbookInputQuery: null
+- key: ResourceGroup
+  value:
+    simple: ''
+  required: true
+  description: Resource group parsed from the incident URL.
+  playbookInputQuery: null
+- key: IncidentId
+  value:
+    simple: ''
+  required: true
+  description: Sentinel incident GUID parsed from the incident URL.
+  playbookInputQuery: null
+outputs:
+- contextPath: AzureSentinel.IncidentEntity
+  description: Raw Sentinel entity list, populated when the loop exits on condition.
+  type: unknown
+dirtyInputs: true

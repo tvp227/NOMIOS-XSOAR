@@ -1,0 +1,925 @@
+id: b3e5d7f9-4a28-4c61-8b0d-6f2c9e4a7d13
+version: 31
+contentitemexportablefields:
+  contentitemfields:
+    packID: ''
+    packName: ''
+    itemVersion: ''
+    fromServerVersion: ''
+    toServerVersion: ''
+    propagationLabels:
+    - all
+    definitionid: ''
+    prevname: ''
+    isoverridable: false
+vcShouldKeepItemLegacyProdMachine: false
+name: INGEST AND INVESTIGATE - SENTINEL - UKDEV
+description: |-
+  Microsoft Sentinel ingest and investigate adapter.
+
+  Responsibilities (all Sentinel-specific logic lives here):
+    1. Parse subscription / resource group / incident ID from the incident URL (once).
+    2. Pull incident entities via a looped sub-playbook (GET ENTITIES - SENTINEL) and normalise them.
+    3. Capture the triggering analytics rule and re-run its query over its own period.
+    4. Map Sentinel severity to the canonical 1-4 scale.
+    5. Build the vendor-neutral CanonicalIncident object.
+
+  Resilience rules:
+    - Entities and rule investigation are enrichment. Every failure in those branches flags the
+      IngestPath and skips to SEVERITY MAP so the incident is always built.
+    - No write-back to Sentinel from this playbook. That is SYNC - SENTINEL's job, after triage.
+    - All Sentinel commands target incident.sourceInstance. Only the Log Analytics workspace is a
+      configured input, because it cannot be derived from the incident.
+
+  Output contract (consumed by GENERIC HANDLER - PARENT):
+    - CanonicalIncident   vendor-neutral incident object (always set)
+    - ExtractedEntities   flat list of entity values (unset when Sentinel returned none)
+    - IngestPath          list of observability flags raised during ingest
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    taskid: 12295461-f99d-4553-b4c8-d0839b3d546e
+    type: start
+    task:
+      id: 12295461-f99d-4553-b4c8-d0839b3d546e
+      version: -1
+      name: ''
+      type: start
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 397.5,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '1':
+    id: '1'
+    taskid: 8e2ea619-b1aa-4b95-a8ab-dce14f877cd2
+    type: condition
+    task:
+      id: 8e2ea619-b1aa-4b95-a8ab-dce14f877cd2
+      version: -1
+      name: HAS INCIDENT URL
+      description: Everything Sentinel-specific is keyed off the incident URL. If the mapper did not populate it there is nothing to fetch - skip straight to severity mapping so the incident still gets a CanonicalIncident and reaches the analyst.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#default#':
+      - '2'
+      'NO':
+      - '17'
+    separatecontext: false
+    conditions:
+    - label: 'NO'
+      condition:
+      - - operator: isEmpty
+          left:
+            value:
+              simple: incident.incidenturl
+            iscontext: true
+          right:
+            value: {}
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 397.5,
+          "y": 210
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '2':
+    id: '2'
+    taskid: 986182f9-5b4e-4b40-9326-da7f66ade869
+    type: regular
+    task:
+      id: 986182f9-5b4e-4b40-9326-da7f66ade869
+      version: -1
+      name: SET SUBSCRIPTION ID
+      description: Parses the Azure subscription ID out of the incident URL. Parsed once - downstream tasks reference Sentinel.SubscriptionId.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '3'
+    scriptarguments:
+      key:
+        simple: Sentinel.SubscriptionId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: subscriptions/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 397.5,
+          "y": 385
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '3':
+    id: '3'
+    taskid: 9621cdbc-c5c6-4155-9870-5af6c817a647
+    type: regular
+    task:
+      id: 9621cdbc-c5c6-4155-9870-5af6c817a647
+      version: -1
+      name: SET RESOURCE GROUP
+      description: Parses the resource group name out of the incident URL.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '4'
+    scriptarguments:
+      key:
+        simple: Sentinel.ResourceGroup
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: resourceGroups/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 397.5,
+          "y": 560
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '4':
+    id: '4'
+    taskid: 2fdb3972-7971-4491-a469-831f2bb53270
+    type: regular
+    task:
+      id: 2fdb3972-7971-4491-a469-831f2bb53270
+      version: -1
+      name: SET SENTINEL INCIDENT ID
+      description: Parses the Sentinel incident GUID out of the incident URL. Entity retrieval and rule investigation then run in parallel and rejoin at SEVERITY MAP.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '5'
+      - '20'
+    scriptarguments:
+      key:
+        simple: Sentinel.IncidentId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: Incidents/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 397.5,
+          "y": 735
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '5':
+    id: '5'
+    taskid: 27eb00e3-c8eb-4c4e-85a3-4490e30604ac
+    type: title
+    task:
+      id: 27eb00e3-c8eb-4c4e-85a3-4490e30604ac
+      version: -1
+      name: ENTITY EXTRACTION
+      description: 'Sentinel attaches entities asynchronously, so XSOAR often fetches the incident before they exist. The fetch is a looped sub-playbook: retry every 60s, up to 4 attempts, exit as soon as entities appear. Hitting the cap raises an error on the loop task, which is routed to NO ENTITIES - the incident is never dropped.'
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '6'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 160,
+          "y": 910
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '6':
+    id: '6'
+    taskid: 2be6f300-02de-48a8-814c-f02f7008cf60
+    type: playbook
+    task:
+      id: 2be6f300-02de-48a8-814c-f02f7008cf60
+      version: -1
+      name: GET ENTITIES - SENTINEL - UKDEV
+      description: |-
+        Looped fetch. Exit condition: AzureSentinel.IncidentEntity is not empty. Wait 60s between attempts, max 4 attempts (loop settings on this task - XSOAR does not allow these to be inputs).
+
+        On error (cap reached or hard failure): NO ENTITIES.
+      playbookName: GET ENTITIES - SENTINEL - UKDEV
+      type: playbook
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#error#':
+      - '16'
+      '#none#':
+      - '7'
+    scriptarguments:
+      SubscriptionId:
+        simple: ${Sentinel.SubscriptionId}
+      ResourceGroup:
+        simple: ${Sentinel.ResourceGroup}
+      IncidentId:
+        simple: ${Sentinel.IncidentId}
+    separatecontext: true
+    continueonerrortype: errorPath
+    view: |-
+      {
+        "position": {
+          "x": 160,
+          "y": 1070
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+    loop:
+      iscommand: false
+      builtincondition:
+      - - operator: isNotEmpty
+          left:
+            value:
+              simple: AzureSentinel.IncidentEntity
+            iscontext: true
+          right:
+            value: {}
+      exitCondition: ''
+      wait: 60
+      max: 4
+  '7':
+    id: '7'
+    taskid: 8c77096f-7527-41f6-bb29-5d36e9383a85
+    type: condition
+    task:
+      id: 8c77096f-7527-41f6-bb29-5d36e9383a85
+      version: -1
+      name: HAVE ENTITIES
+      description: Belt and braces after the loop - guards against the loop exiting without output.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#default#':
+      - '12'
+      'NO':
+      - '16'
+    separatecontext: false
+    conditions:
+    - label: 'NO'
+      condition:
+      - - operator: isEmpty
+          left:
+            value:
+              simple: AzureSentinel.IncidentEntity
+            iscontext: true
+          right:
+            value: {}
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 160,
+          "y": 1245
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '16':
+    id: '16'
+    taskid: 0be4c967-c2b3-4d0f-9f02-a5d1c2aa15ce
+    type: title
+    task:
+      id: 0be4c967-c2b3-4d0f-9f02-a5d1c2aa15ce
+      version: -1
+      name: NO ENTITIES AVAILABLE
+      description: Nothing came back. ExtractedEntities is left unset - the parent's HAS INDICATORS check handles this and skips enrichment.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '19'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 160,
+          "y": 1420
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '19':
+    id: '19'
+    taskid: 3723ec50-55e2-47a3-9193-62b542dbaded
+    type: regular
+    task:
+      id: 3723ec50-55e2-47a3-9193-62b542dbaded
+      version: -1
+      name: FLAG ENTITIES_UNAVAILABLE
+      description: 'Observability marker: entities never arrived or could not be normalised. Surfaced to the parent via the IngestPath output.'
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '17'
+    scriptarguments:
+      key:
+        simple: IngestPath
+      value:
+        simple: ENTITIES_UNAVAILABLE
+      append:
+        simple: 'true'
+    separatecontext: false
+    continueonerror: true
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 160,
+          "y": 1595
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '12':
+    id: '12'
+    taskid: 9dcabd52-f35b-47c5-a9a4-2148f6796049
+    type: regular
+    task:
+      id: 9dcabd52-f35b-47c5-a9a4-2148f6796049
+      version: -1
+      name: NORMALISE ENTITIES
+      description: |-
+        Handles Sentinel's inconsistent entity payloads (lowercase vs capitalised keys, missing kind field) by fingerprinting on characteristic field names. Outputs SentinelEntities with a flat .Values list.
+
+        On error: continue without entities.
+      scriptName: SentinelEntityExtraction-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#error#':
+      - '19'
+      '#none#':
+      - '15'
+    scriptarguments:
+      Entities:
+        simple: ${AzureSentinel.IncidentEntity.Properties}
+    separatecontext: false
+    continueonerrortype: errorPath
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 1420
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: Microsoft Sentinel Entities
+      output:
+        simple: ${SentinelEntities}
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '15':
+    id: '15'
+    taskid: 9054c3e2-dddd-4a16-9d6c-577ab6f583da
+    type: regular
+    task:
+      id: 9054c3e2-dddd-4a16-9d6c-577ab6f583da
+      version: -1
+      name: SET EXTRACTED ENTITIES
+      description: Publishes the flat entity value list under the vendor-neutral output key that the parent consumes.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '17'
+    scriptarguments:
+      key:
+        simple: ExtractedEntities
+      value:
+        simple: ${SentinelEntities.Values}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 1595
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '20':
+    id: '20'
+    taskid: fe584b99-cc08-479d-bf5f-fe6330da6f56
+    type: title
+    task:
+      id: fe584b99-cc08-479d-bf5f-fe6330da6f56
+      version: -1
+      name: RULE INVESTIGATION
+      description: Re-runs the triggering analytics rule so the analyst sees the raw hits alongside the incident. Enrichment only - any failure flags RULE_QUERY_FAILED and skips to SEVERITY MAP.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '21'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 800,
+          "y": 910
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '21':
+    id: '21'
+    taskid: ef43a73e-5f95-4978-ab0c-50237b667231
+    type: regular
+    task:
+      id: ef43a73e-5f95-4978-ab0c-50237b667231
+      version: -1
+      name: CAPTURE RULE
+      description: Fetches the analytics rule definition (query, period) using the first related rule ID on the incident.
+      script: Azure Sentinel|||azure-sentinel-list-alert-rule
+      iscommand: true
+      brand: Azure Sentinel
+      type: regular
+    nexttasks:
+      '#error#':
+      - '24'
+      '#none#':
+      - '22'
+    scriptarguments:
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      rule_id:
+        complex:
+          root: incident.labels
+          accessor: relatedAnalyticRuleIds
+          transformers:
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: '['
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: '"'
+          - operator: replace
+            args:
+              limit: {}
+              replaceWith: {}
+              toReplace:
+                value:
+                  simple: ']'
+      using:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    continueonerrortype: errorPath
+    view: |-
+      {
+        "position": {
+          "x": 800,
+          "y": 1070
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '22':
+    id: '22'
+    taskid: e6d5b217-b40b-48f0-895a-a8ecce746d46
+    type: regular
+    task:
+      id: e6d5b217-b40b-48f0-895a-a8ecce746d46
+      version: -1
+      name: RUN RULE QUERY
+      description: |-
+        Executes the rule's KQL against the customer workspace, capped at 100 rows. Timespan is the rule's own query period so results match what actually fired (falls back to the workspace default for NRT rules).
+
+        The cap is appended on a new line, not wrapped in parentheses - many rules start with let statements, which are invalid inside parentheses, and the newline already protects against a trailing comment.
+
+        Instance comes from the LogAnalyticsInstance input - never hardcode a workspace here.
+      script: Azure Log Analytics|||azure-log-analytics-execute-query
+      iscommand: true
+      brand: Azure Log Analytics
+      type: regular
+    nexttasks:
+      '#error#':
+      - '24'
+      '#none#':
+      - '23'
+    scriptarguments:
+      query:
+        complex:
+          root: AzureSentinel.AlertRule.properties.query
+          transformers:
+          - operator: concat
+            args:
+              prefix: {}
+              suffix:
+                value:
+                  simple: |2-
+
+                    | take 100
+      timespan:
+        simple: ${AzureSentinel.AlertRule.properties.queryPeriod}
+      using:
+        simple: ${inputs.LogAnalyticsInstance}
+    separatecontext: false
+    continueonerrortype: errorPath
+    view: |-
+      {
+        "position": {
+          "x": 800,
+          "y": 1245
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '23':
+    id: '23'
+    taskid: b5dff1c0-067e-4f07-a060-8b8d642e3dba
+    type: regular
+    task:
+      id: b5dff1c0-067e-4f07-a060-8b8d642e3dba
+      version: -1
+      name: FORMAT KQL RESULTS
+      description: Renders the query results as a markdown code block into the incident. Cosmetic - continue on error.
+      scriptName: InvestigationResultsMD-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '17'
+    scriptarguments:
+      json_data:
+        simple: ${AzureLogAnalytics.Query}
+    separatecontext: false
+    continueonerror: true
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 800,
+          "y": 1420
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: InvestigationResultCodeBlock
+      output:
+        simple: ${InvestigationResultsMD}
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '24':
+    id: '24'
+    taskid: 51efeb78-ce18-488c-9810-3d93d5f5b610
+    type: regular
+    task:
+      id: 51efeb78-ce18-488c-9810-3d93d5f5b610
+      version: -1
+      name: FLAG RULE_QUERY_FAILED
+      description: 'Observability marker: rule capture or query execution failed. Surfaced to the parent via the IngestPath output.'
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '17'
+    scriptarguments:
+      key:
+        simple: IngestPath
+      value:
+        simple: RULE_QUERY_FAILED
+      append:
+        simple: 'true'
+    separatecontext: false
+    continueonerror: true
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1020,
+          "y": 1420
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '17':
+    id: '17'
+    taskid: 2036269c-d653-4bfc-a51a-fbf76939a599
+    type: regular
+    task:
+      id: 2036269c-d653-4bfc-a51a-fbf76939a599
+      version: -1
+      name: SEVERITY MAP
+      description: Join point for both branches and every skip/error path above. Converts Sentinel severity to the canonical 1-4 scale. Must succeed - the escalation matrix depends on it.
+      scriptName: SeverityMapper-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '18'
+    scriptarguments:
+      severity:
+        simple: ${incident.labels.Severity}
+      source:
+        simple: sentinel
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 1770
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '18':
+    id: '18'
+    taskid: 4ce0a17a-d42f-45a4-8202-23e6c26ee949
+    type: regular
+    task:
+      id: 4ce0a17a-d42f-45a4-8202-23e6c26ee949
+      version: -1
+      name: BUILD CANONICAL INCIDENT
+      description: Builds the vendor-neutral CanonicalIncident object. Last Sentinel-aware task - the parent references CanonicalIncident and ExtractedEntities only from here on.
+      scriptName: NomiosCanonicalSchemaUK
+      type: regular
+      iscommand: false
+      brand: ''
+    scriptarguments:
+      title:
+        simple: ${incident.name}
+      description:
+        simple: ${incident.description}
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      incident_url:
+        simple: ${incident.incidenturl}
+      severity:
+        simple: ${SeverityMapping.mapped_severity}
+      status:
+        simple: ${incident.labels.Status}
+      mitre_tactics:
+        simple: ${incident.labels.Tactics}
+      time_generated:
+        simple: ${incident.created}
+      investigation_results:
+        simple: ${AzureLogAnalytics}
+      source_vendor:
+        simple: Microsoft
+      source_product:
+        simple: Microsoft Sentinel
+      source_technology:
+        simple: SIEM
+      source_instance:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 1945
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 2070,
+        "width": 1275,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs:
+- key: LogAnalyticsInstance
+  value:
+    simple: WC_Tyrell_SoC_LAW
+  required: true
+  description: Azure Log Analytics integration instance for this customer's workspace. Used only by RUN RULE QUERY.
+  playbookInputQuery: null
+outputs:
+- contextPath: CanonicalIncident
+  description: Vendor-neutral canonical cyber security incident JSON.
+  type: unknown
+- contextPath: ExtractedEntities
+  description: Flat list of extracted entity values for indicator creation and enrichment.
+  type: unknown
+- contextPath: IngestPath
+  description: Observability flags raised during ingest (ENTITIES_UNAVAILABLE, RULE_QUERY_FAILED).
+  type: unknown
+dirtyInputs: true

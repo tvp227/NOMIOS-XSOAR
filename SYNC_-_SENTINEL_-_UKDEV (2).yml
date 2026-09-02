@@ -1,0 +1,492 @@
+id: 99bddd7b-e01b-4aa4-8748-6560e6327052
+version: 19
+contentitemexportablefields:
+  contentitemfields:
+    packID: ''
+    packName: ''
+    itemVersion: ''
+    fromServerVersion: ''
+    toServerVersion: ''
+    propagationLabels:
+    - all
+    definitionid: ''
+    prevname: ''
+    isoverridable: false
+vcShouldKeepItemLegacyProdMachine: false
+name: SYNC - SENTINEL - UKDEV
+description: |-
+  Microsoft Sentinel write-back adapter.
+
+  Called by GENERIC HANDLER - PARENT after the escalation matrix has decided an outcome.
+    1. Posts the triage narrative back to the source incident as a comment.
+    2. Mirrors the outcome onto the Sentinel status: Closed for AUTO-CLOSED / DUPLICATE,
+       Active for everything else (optional via MarkActiveOnEscalate).
+
+  Rules:
+    - No decision logic and no AI calls live here. The parent decides, this playbook only reports.
+    - Errors propagate to the parent, which flags SYNC_FAILED and carries on. Triage is never
+      failed by a write-back problem.
+    - Targets incident.sourceInstance, so it is multi-tenant safe without configuration.
+
+  Input contract:
+    - Comment       narrative text to post
+    - Disposition   ESCALATED | AUTO-CLOSED | DUPLICATE
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    taskid: 58f3f380-bcbf-4bab-9a90-fd6d454bd9b6
+    type: start
+    task:
+      id: 58f3f380-bcbf-4bab-9a90-fd6d454bd9b6
+      version: -1
+      name: ''
+      type: start
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '1':
+    id: '1'
+    taskid: daa8fb0b-d50a-48d8-a02e-7130fdcb2cb8
+    type: regular
+    task:
+      id: daa8fb0b-d50a-48d8-a02e-7130fdcb2cb8
+      version: -1
+      name: SET SUBSCRIPTION ID
+      description: Parses the Azure subscription ID out of the incident URL. Re-parsed here rather than passed from the parent so the parent stays vendor-neutral.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '2'
+    scriptarguments:
+      key:
+        simple: Sentinel.SubscriptionId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: subscriptions/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 210
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '2':
+    id: '2'
+    taskid: 6539cf09-99dc-4606-86e4-55336220efe2
+    type: regular
+    task:
+      id: 6539cf09-99dc-4606-86e4-55336220efe2
+      version: -1
+      name: SET RESOURCE GROUP
+      description: Parses the resource group name out of the incident URL.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '3'
+    scriptarguments:
+      key:
+        simple: Sentinel.ResourceGroup
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: resourceGroups/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 385
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '3':
+    id: '3'
+    taskid: 74ddd312-7ce5-436a-8193-90efbab47623
+    type: regular
+    task:
+      id: 74ddd312-7ce5-436a-8193-90efbab47623
+      version: -1
+      name: SET SENTINEL INCIDENT ID
+      description: Parses the Sentinel incident GUID out of the incident URL.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '4'
+    scriptarguments:
+      key:
+        simple: Sentinel.IncidentId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: Incidents/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 560
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '4':
+    id: '4'
+    taskid: 31b752f1-20e8-4ae0-beb2-cf3611a2d018
+    type: regular
+    task:
+      id: 31b752f1-20e8-4ae0-beb2-cf3611a2d018
+      version: -1
+      name: ADD TRIAGE COMMENT
+      description: Posts the triage narrative as a Sentinel comment, prefixed with the disposition. Stop on error - the parent catches the sub-playbook error and flags SYNC_FAILED without failing triage.
+      script: Azure Sentinel|||azure-sentinel-incident-add-comment
+      iscommand: true
+      brand: Azure Sentinel
+      type: regular
+    nexttasks:
+      '#none#':
+      - '5'
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      message:
+        simple: |-
+          [XSOAR TRIAGE - ${inputs.Disposition}]
+
+          ${inputs.Comment}
+      using:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 735
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '5':
+    id: '5'
+    taskid: 57e07707-5d51-4286-9527-e0d0fbbe11b7
+    type: condition
+    task:
+      id: 57e07707-5d51-4286-9527-e0d0fbbe11b7
+      version: -1
+      name: DISPOSITION
+      description: Mirrors the XSOAR outcome onto the Sentinel incident status. AUTO-CLOSED and DUPLICATE close it; anything else marks it Active (XSOAR/SOC has it) unless MarkActiveOnEscalate is false, in which case only the comment is posted.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      CLOSE:
+      - '6'
+      ACTIVE:
+      - '7'
+      '#default#':
+      - '8'
+    separatecontext: false
+    conditions:
+    - label: CLOSE
+      condition:
+      - - operator: inList
+          left:
+            value:
+              simple: inputs.Disposition
+            iscontext: true
+          right:
+            value:
+              simple: AUTO-CLOSED,DUPLICATE
+    - label: ACTIVE
+      condition:
+      - - operator: isTrue
+          left:
+            value:
+              simple: inputs.MarkActiveOnEscalate
+            iscontext: true
+          right:
+            value: {}
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 910
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '6':
+    id: '6'
+    taskid: 3c1e2760-a0b1-467f-b084-32a800076c6a
+    type: regular
+    task:
+      id: 3c1e2760-a0b1-467f-b084-32a800076c6a
+      version: -1
+      name: CLOSE SENTINEL INCIDENT
+      description: Closes the source incident so the customer's Sentinel queue matches XSOAR. Classification defaults to Undetermined - set CloseClassification/CloseClassificationReason per customer if they want BenignPositive etc.
+      script: Azure Sentinel|||azure-sentinel-incident-update
+      iscommand: true
+      brand: Azure Sentinel
+      type: regular
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      status:
+        simple: Closed
+      classification:
+        simple: ${inputs.CloseClassification}
+      classification_reason:
+        simple: ${inputs.CloseClassificationReason}
+      classification_comment:
+        simple: Closed by XSOAR - ${inputs.Disposition}. See comment for detail.
+      using:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 160,
+          "y": 1085
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '7':
+    id: '7'
+    taskid: e91636bc-9b03-415b-822b-c813f4c9e9b9
+    type: regular
+    task:
+      id: e91636bc-9b03-415b-822b-c813f4c9e9b9
+      version: -1
+      name: MARK SENTINEL INCIDENT ACTIVE
+      description: Sets the Sentinel incident to Active so the customer can see it is being worked.
+      script: Azure Sentinel|||azure-sentinel-incident-update
+      iscommand: true
+      brand: Azure Sentinel
+      type: regular
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      status:
+        simple: Active
+      using:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 595,
+          "y": 1085
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '8':
+    id: '8'
+    taskid: 020e9f1d-d0fa-4719-a943-19fbb9a24382
+    type: title
+    task:
+      id: 020e9f1d-d0fa-4719-a943-19fbb9a24382
+      version: -1
+      name: COMMENT ONLY
+      description: MarkActiveOnEscalate is false - status left untouched.
+      type: title
+      iscommand: false
+      brand: ''
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1030,
+          "y": 1085
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 1110,
+        "width": 1280,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs:
+- key: Comment
+  value:
+    simple: ''
+  required: true
+  description: Narrative to post back to the Sentinel incident.
+  playbookInputQuery: null
+- key: Disposition
+  value:
+    simple: ''
+  required: true
+  description: 'Triage outcome: ESCALATED, AUTO-CLOSED or DUPLICATE. Drives the comment prefix and the status update.'
+  playbookInputQuery: null
+- key: MarkActiveOnEscalate
+  value:
+    simple: 'true'
+  required: true
+  description: If true, non-closing dispositions set the Sentinel incident to Active. Set false for customers who manage status themselves.
+  playbookInputQuery: null
+- key: CloseClassification
+  value:
+    simple: Undetermined
+  required: true
+  description: 'Sentinel classification used when closing: Undetermined, BenignPositive, FalsePositive or TruePositive.'
+  playbookInputQuery: null
+- key: CloseClassificationReason
+  value:
+    simple: ''
+  required: false
+  description: Required by Sentinel for BenignPositive (SuspiciousButExpected) and FalsePositive (IncorrectAlertLogic / InaccurateData). Leave empty for Undetermined.
+  playbookInputQuery: null
+outputs: []
+dirtyInputs: true
