@@ -1,0 +1,304 @@
+id: 99bddd7b-e01b-4aa4-8748-6560e6327052
+version: 18
+contentitemexportablefields:
+  contentitemfields:
+    packID: ''
+    packName: ''
+    itemVersion: ''
+    fromServerVersion: ''
+    toServerVersion: ''
+    propagationLabels:
+    - all
+    definitionid: ''
+    prevname: ''
+    isoverridable: false
+vcShouldKeepItemLegacyProdMachine: false
+name: SYNC - SENTINEL - UKDEV
+description: |-
+  Microsoft Sentinel write-back adapter.
+
+  Called by GENERIC HANDLER - PARENT after the escalation matrix has decided an outcome.
+  Posts the triage narrative back to the source Sentinel incident as a comment.
+
+  Rules:
+    - No decision logic and no AI calls live here. The parent decides, this playbook only reports.
+    - Write-back is best effort. Failure here never fails the parent.
+    - Targets the instance the incident was fetched from (incident.sourceInstance), so it is
+      multi-tenant safe without configuration.
+
+  Input contract:
+    - Comment       narrative text to post (AI summary or closing note)
+    - Disposition   ESCALATED | RECURRING | AUTO-CLOSED - prefixed to the comment
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    taskid: 18a9cde9-e9e4-407b-a469-e498f0940d87
+    type: start
+    task:
+      id: 18a9cde9-e9e4-407b-a469-e498f0940d87
+      version: -1
+      name: ''
+      type: start
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '1':
+    id: '1'
+    taskid: 55bf4f7f-d5f1-4fbe-8796-32c4b22e9294
+    type: regular
+    task:
+      id: 55bf4f7f-d5f1-4fbe-8796-32c4b22e9294
+      version: -1
+      name: SET SUBSCRIPTION ID
+      description: Parses the Azure subscription ID out of the incident URL. Re-parsed here rather than passed from the parent so the parent stays vendor-neutral.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '2'
+    scriptarguments:
+      key:
+        simple: Sentinel.SubscriptionId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: subscriptions/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 210
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '2':
+    id: '2'
+    taskid: d1cf9577-366e-47ff-8b7a-5ea378e20878
+    type: regular
+    task:
+      id: d1cf9577-366e-47ff-8b7a-5ea378e20878
+      version: -1
+      name: SET RESOURCE GROUP
+      description: Parses the resource group name out of the incident URL.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '3'
+    scriptarguments:
+      key:
+        simple: Sentinel.ResourceGroup
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: resourceGroups/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 385
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '3':
+    id: '3'
+    taskid: 8fe7dd49-b386-4ad9-99a6-f83e9dd32e3f
+    type: regular
+    task:
+      id: 8fe7dd49-b386-4ad9-99a6-f83e9dd32e3f
+      version: -1
+      name: SET SENTINEL INCIDENT ID
+      description: Parses the Sentinel incident GUID out of the incident URL.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '4'
+    scriptarguments:
+      key:
+        simple: Sentinel.IncidentId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: Incidents/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 560
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '4':
+    id: '4'
+    taskid: e232bf01-648a-48d9-bbf6-fd2a9f62dca8
+    type: regular
+    task:
+      id: e232bf01-648a-48d9-bbf6-fd2a9f62dca8
+      version: -1
+      name: ADD TRIAGE COMMENT
+      description: |-
+        Single write-back point to Sentinel. Posts the triage narrative produced by the parent as an incident comment, prefixed with the disposition so a Sentinel analyst can see the XSOAR outcome without opening XSOAR.
+
+        Continue-on-error: write-back is best effort. A Sentinel API failure must never fail the triage that has already been decided.
+      script: Azure Sentinel|||azure-sentinel-incident-add-comment
+      iscommand: true
+      brand: Azure Sentinel
+      type: regular
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      message:
+        simple: |-
+          [XSOAR TRIAGE - ${inputs.Disposition}]
+
+          ${inputs.Comment}
+      using:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    continueonerror: true
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 377.5,
+          "y": 735
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 760,
+        "width": 755,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs:
+- key: Comment
+  value:
+    simple: ''
+  required: true
+  description: Narrative to post back to the Sentinel incident (AI summary or closing note).
+  playbookInputQuery: null
+- key: Disposition
+  value:
+    simple: ''
+  required: true
+  description: 'Triage outcome label prefixed to the comment: ESCALATED, RECURRING or AUTO-CLOSED.'
+  playbookInputQuery: null
+outputs: []
+dirtyInputs: true
