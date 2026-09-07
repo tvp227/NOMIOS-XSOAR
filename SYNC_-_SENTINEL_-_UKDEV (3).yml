@@ -1,0 +1,921 @@
+id: 99bddd7b-e01b-4aa4-8748-6560e6327052
+version: 30
+contentitemexportablefields:
+  contentitemfields:
+    packID: ''
+    packName: ''
+    itemVersion: ''
+    fromServerVersion: ''
+    toServerVersion: ''
+    propagationLabels:
+    - all
+    definitionid: ''
+    prevname: ''
+    isoverridable: false
+vcShouldKeepItemLegacyProdMachine: false
+name: SYNC - SENTINEL - UKDEV
+description: |-
+  Microsoft Sentinel write-back adapter, outbound half. ADAPTER CONTRACT v1.0.
+  Posts the triage narrative as an idempotent comment, then mirrors the outcome onto the
+  Sentinel status, labels and owner. No decision logic and no AI calls live here.
+  Inbound (Sentinel to XSOAR) is handled by native Incoming mirroring on the instance,
+  not by this playbook. Errors propagate to the parent, which continues regardless.
+  Input contract: Comment, Disposition (ESCALATED | RECURRING | AUTO-CLOSED |
+  MANUAL-REVIEW), Classification, ClassificationReason, RunId, MarkActiveOnEscalate,
+  OwnerUPN, Tags.
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    taskid: 40aa74d5-ddec-5a8c-964a-f4bdfcd35e11
+    type: start
+    task:
+      id: 40aa74d5-ddec-5a8c-964a-f4bdfcd35e11
+      version: -1
+      name: ''
+      type: start
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '1':
+    id: '1'
+    taskid: a3ea1e30-ba53-547d-a3b0-9321b5d62d2e
+    type: title
+    task:
+      id: a3ea1e30-ba53-547d-a3b0-9321b5d62d2e
+      version: -1
+      name: SYNC - STAGE
+      description: |-
+        SYNC. Outbound write-back only. Targets incident.sourceInstance on every command, so it
+        is multi-tenant safe with no per-customer configuration.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '2'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 225
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '2':
+    id: '2'
+    taskid: 0d48e48e-aca3-5902-a69a-b51cc7984a0a
+    type: condition
+    task:
+      id: 0d48e48e-aca3-5902-a69a-b51cc7984a0a
+      version: -1
+      name: SYNC - HAVE TARGET REFS?
+      description: |-
+        SYNC. The ingest adapter writes the source refs once. Only re-parse them here if the
+        context is empty, for example on a rerun after a context wipe.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'NO':
+      - '3'
+      '#default#':
+      - '6'
+    conditions:
+    - label: 'NO'
+      condition:
+      - - operator: isEmpty
+          left:
+            value:
+              simple: Sentinel.IncidentId
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 400
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '3':
+    id: '3'
+    taskid: c6f8785c-ad1c-53ac-a318-16e726141207
+    type: regular
+    task:
+      id: c6f8785c-ad1c-53ac-a318-16e726141207
+      version: -1
+      name: SYNC - PARSE SUBSCRIPTION ID
+      description: SYNC. Fallback parse of the Azure subscription ID from the incident URL.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '4'
+    scriptarguments:
+      key:
+        simple: Sentinel.SubscriptionId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: subscriptions/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 575
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '4':
+    id: '4'
+    taskid: ef982895-0690-5dd3-8fba-4df9c437f37c
+    type: regular
+    task:
+      id: ef982895-0690-5dd3-8fba-4df9c437f37c
+      version: -1
+      name: SYNC - PARSE RESOURCE GROUP
+      description: SYNC. Fallback parse of the resource group from the incident URL.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '5'
+    scriptarguments:
+      key:
+        simple: Sentinel.ResourceGroup
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: resourceGroups/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 750
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '5':
+    id: '5'
+    taskid: f6cdd1ce-edaa-58c1-9a39-d1e626a10a10
+    type: regular
+    task:
+      id: f6cdd1ce-edaa-58c1-9a39-d1e626a10a10
+      version: -1
+      name: SYNC - PARSE INCIDENT ID
+      description: SYNC. Fallback parse of the Sentinel incident GUID from the incident URL.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '6'
+    scriptarguments:
+      key:
+        simple: Sentinel.IncidentId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: Incidents/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 925
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '6':
+    id: '6'
+    taskid: de82e2eb-d166-5678-bdd0-7582d4267563
+    type: regular
+    task:
+      id: de82e2eb-d166-5678-bdd0-7582d4267563
+      version: -1
+      name: SYNC - LIST EXISTING COMMENTS
+      description: |-
+        SYNC. Reads the existing comments so the post can be made idempotent. Checked against
+        the remote system rather than local state, so it survives context wipes and reruns.
+      script: Azure Sentinel|||azure-sentinel-list-incident-comments
+      type: regular
+      iscommand: true
+      brand: Azure Sentinel
+    nexttasks:
+      '#none#':
+      - '7'
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      limit:
+        simple: '50'
+      using:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1100
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '7':
+    id: '7'
+    taskid: 2f490bd2-a74b-5331-b34b-cfee9c23e8f6
+    type: condition
+    task:
+      id: 2f490bd2-a74b-5331-b34b-cfee9c23e8f6
+      version: -1
+      name: SYNC - ALREADY POSTED?
+      description: |-
+        SYNC. If a comment already carries this RunId, skip the post and go straight to the
+        status update. Reruns never double-post.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'YES':
+      - '9'
+      '#default#':
+      - '8'
+    conditions:
+    - label: 'YES'
+      condition:
+      - - operator: containsGeneral
+          left:
+            value:
+              simple: AzureSentinel.IncidentComment.Message
+            iscontext: true
+          right:
+            value:
+              simple: ${inputs.RunId}
+            iscontext: true
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1275
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '8':
+    id: '8'
+    taskid: fdf16817-9b02-5ff8-b7d7-e3f8a48c4146
+    type: regular
+    task:
+      id: fdf16817-9b02-5ff8-b7d7-e3f8a48c4146
+      version: -1
+      name: SYNC - ADD TRIAGE COMMENT
+      description: |-
+        SYNC. Posts the triage narrative, prefixed with the run ID and the disposition. Continue
+        on error: the status update is still worth attempting if the comment fails.
+      script: Azure Sentinel|||azure-sentinel-incident-add-comment
+      type: regular
+      iscommand: true
+      brand: Azure Sentinel
+    nexttasks:
+      '#none#':
+      - '9'
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      using:
+        simple: ${incident.sourceInstance}
+      message:
+        simple: |-
+          [XSOAR TRIAGE ${inputs.RunId} - ${inputs.Disposition}]
+
+          ${inputs.Comment}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 1450
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '9':
+    id: '9'
+    taskid: bcbbed77-fe9a-527c-9273-144af3432339
+    type: regular
+    task:
+      id: bcbbed77-fe9a-527c-9273-144af3432339
+      version: -1
+      name: SYNC - GET CURRENT LABELS
+      description: |-
+        SYNC. Reads the current labels. The update command replaces the whole label set, so
+        without this merge step customer-applied labels would be silently wiped.
+      script: Azure Sentinel|||azure-sentinel-get-incident-by-id
+      type: regular
+      iscommand: true
+      brand: Azure Sentinel
+    nexttasks:
+      '#none#':
+      - '10'
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      using:
+        simple: ${incident.sourceInstance}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1625
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '10':
+    id: '10'
+    taskid: ab6991d1-e988-5e7e-bb50-9ecbf011b8e7
+    type: condition
+    task:
+      id: ab6991d1-e988-5e7e-bb50-9ecbf011b8e7
+      version: -1
+      name: SYNC - IS RECURRING?
+      description: |-
+        SYNC. Mechanical mirroring of the disposition onto the label set, not a decision.
+        Recurring occurrences also carry Tuning-Candidate for detection engineering.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'YES':
+      - '11'
+      '#default#':
+      - '12'
+    conditions:
+    - label: 'YES'
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: inputs.Disposition
+            iscontext: true
+          right:
+            value:
+              simple: RECURRING
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1800
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '11':
+    id: '11'
+    taskid: 87c359f5-6e3f-52ac-a30d-b0bc30cd3a9c
+    type: regular
+    task:
+      id: 87c359f5-6e3f-52ac-a30d-b0bc30cd3a9c
+      version: -1
+      name: SYNC - BUILD LABELS RECURRING
+      description: SYNC. Existing labels plus the configured tags, the disposition and Tuning-Candidate.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '13'
+    scriptarguments:
+      key:
+        simple: Sentinel.Labels
+      value:
+        complex:
+          root: AzureSentinel.Incident.Label
+          accessor: Name
+          transformers:
+          - operator: append
+            args:
+              item:
+                value:
+                  simple: ${inputs.Tags}
+                iscontext: true
+          - operator: append
+            args:
+              item:
+                value:
+                  simple: ${inputs.Disposition}
+                iscontext: true
+          - operator: append
+            args:
+              item:
+                value:
+                  simple: Tuning-Candidate
+          - operator: join
+            args:
+              separator:
+                value:
+                  simple: ','
+    separatecontext: false
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1975
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '12':
+    id: '12'
+    taskid: a69846a8-b693-520a-87ae-a95f27170cf8
+    type: regular
+    task:
+      id: a69846a8-b693-520a-87ae-a95f27170cf8
+      version: -1
+      name: SYNC - BUILD LABELS STANDARD
+      description: SYNC. Existing labels plus the configured tags and the disposition.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '13'
+    scriptarguments:
+      key:
+        simple: Sentinel.Labels
+      value:
+        complex:
+          root: AzureSentinel.Incident.Label
+          accessor: Name
+          transformers:
+          - operator: append
+            args:
+              item:
+                value:
+                  simple: ${inputs.Tags}
+                iscontext: true
+          - operator: append
+            args:
+              item:
+                value:
+                  simple: ${inputs.Disposition}
+                iscontext: true
+          - operator: join
+            args:
+              separator:
+                value:
+                  simple: ','
+    separatecontext: false
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 1975
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '13':
+    id: '13'
+    taskid: 410f12f1-2fe4-54b1-bc73-257408cdebe0
+    type: condition
+    task:
+      id: 410f12f1-2fe4-54b1-bc73-257408cdebe0
+      version: -1
+      name: SYNC - DISPOSITION
+      description: |-
+        SYNC. AUTO-CLOSED closes the source incident. Everything else marks it Active unless
+        MarkActiveOnEscalate is false, in which case only the comment was posted.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      CLOSE:
+      - '14'
+      ACTIVE:
+      - '15'
+      '#default#':
+      - '16'
+    conditions:
+    - label: CLOSE
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: inputs.Disposition
+            iscontext: true
+          right:
+            value:
+              simple: AUTO-CLOSED
+    - label: ACTIVE
+      condition:
+      - - operator: isTrue
+          left:
+            value:
+              simple: inputs.MarkActiveOnEscalate
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2150
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '14':
+    id: '14'
+    taskid: e58f5e90-4274-59c8-ad95-011d7c9be92f
+    type: regular
+    task:
+      id: e58f5e90-4274-59c8-ad95-011d7c9be92f
+      version: -1
+      name: SYNC - CLOSE SOURCE INCIDENT
+      description: |-
+        SYNC. Closes with the classification the parent derived from the matrix, never the
+        Undetermined default when a better value was passed. Labels merged, not replaced.
+      script: Azure Sentinel|||azure-sentinel-update-incident
+      type: regular
+      iscommand: true
+      brand: Azure Sentinel
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      using:
+        simple: ${incident.sourceInstance}
+      status:
+        simple: Closed
+      labels:
+        simple: ${Sentinel.Labels}
+      classification:
+        simple: ${inputs.Classification}
+      classification_comment:
+        simple: Closed by XSOAR triage - ${inputs.Disposition}. See the triage comment for detail.
+      classification_reason:
+        complex:
+          root: inputs.ClassificationReason
+          transformers:
+          - operator: replace
+            args:
+              toReplace:
+                value:
+                  simple: UNSET
+              replaceWith: {}
+              limit: {}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2325
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '15':
+    id: '15'
+    taskid: 1316a79b-141a-5cc1-9cad-8d88ec578aaa
+    type: regular
+    task:
+      id: 1316a79b-141a-5cc1-9cad-8d88ec578aaa
+      version: -1
+      name: SYNC - MARK SOURCE ACTIVE
+      description: |-
+        SYNC. Marks the source incident Active so the customer can see the SOC has it, and sets
+        labels and owner on the same call rather than a second round trip.
+      script: Azure Sentinel|||azure-sentinel-update-incident
+      type: regular
+      iscommand: true
+      brand: Azure Sentinel
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      using:
+        simple: ${incident.sourceInstance}
+      status:
+        simple: Active
+      labels:
+        simple: ${Sentinel.Labels}
+      user_principal_name:
+        simple: ${inputs.OwnerUPN}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 2325
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '16':
+    id: '16'
+    taskid: 88885df8-ce6a-50a8-89ae-19c74b8d2a49
+    type: title
+    task:
+      id: 88885df8-ce6a-50a8-89ae-19c74b8d2a49
+      version: -1
+      name: SYNC - COMMENT ONLY
+      description: |-
+        SYNC. MarkActiveOnEscalate is false, so the status and owner are left untouched and the
+        comment is the only write-back.
+      type: title
+      iscommand: false
+      brand: ''
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 2325
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 2525,
+        "width": 1290,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs:
+- key: Comment
+  value: {}
+  required: true
+  description: 'Narrative to post back to the source incident. Never empty: the parent falls back to a
+    deterministic narrative.'
+  playbookInputQuery: null
+- key: Disposition
+  value: {}
+  required: true
+  description: ESCALATED, RECURRING, AUTO-CLOSED or MANUAL-REVIEW. Drives the comment prefix, the status
+    and the labels.
+  playbookInputQuery: null
+- key: RunId
+  value: {}
+  required: true
+  description: Idempotency marker. Comments are prefixed with it and skipped if already present, so reruns
+    never double-post.
+  playbookInputQuery: null
+- key: Classification
+  value:
+    simple: Undetermined
+  required: true
+  description: 'Sentinel classification used when closing: Undetermined, BenignPositive, FalsePositive
+    or TruePositive.'
+  playbookInputQuery: null
+- key: ClassificationReason
+  value:
+    simple: UNSET
+  required: true
+  description: InaccurateData, IncorrectAlertLogic, SuspiciousActivity or SuspiciousButExpected. The sentinel
+    value UNSET is stripped before the call.
+  playbookInputQuery: null
+- key: MarkActiveOnEscalate
+  value:
+    simple: 'true'
+  required: true
+  description: If true, non-closing dispositions set the source incident to Active. Set false for customers
+    who manage status themselves.
+  playbookInputQuery: null
+- key: OwnerUPN
+  value: {}
+  required: false
+  description: Optional. UPN to set as owner on the source incident. Left blank means the owner is not
+    touched.
+  playbookInputQuery: null
+- key: Tags
+  value:
+    simple: XSOAR-Triaged
+  required: true
+  description: Comma-separated labels applied to the source incident. Merged with existing labels, never
+    replacing them.
+  playbookInputQuery: null
+outputs: []
+fromversion: 6.10.0

@@ -1,0 +1,1386 @@
+id: b3e5d7f9-4a28-4c61-8b0d-6f2c9e4a7d13
+version: 42
+contentitemexportablefields:
+  contentitemfields:
+    packID: ''
+    packName: ''
+    itemVersion: ''
+    fromServerVersion: ''
+    toServerVersion: ''
+    propagationLabels:
+    - all
+    definitionid: ''
+    prevname: ''
+    isoverridable: false
+vcShouldKeepItemLegacyProdMachine: false
+name: INGEST AND INVESTIGATE - SENTINEL - UKDEV
+description: |-
+  Microsoft Sentinel ingest adapter. ADAPTER CONTRACT v1.0.
+  Parses the source refs once, pulls entities and the analytics rule in parallel, maps
+  severity, builds the triage fingerprint, runs a severity-gated investigation pack, then
+  emits CanonicalIncident, ExtractedEntities and Investigation. Nothing vendor-specific
+  leaves this playbook.
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    taskid: add9c2d0-28f0-581f-83ba-09cac2899e1d
+    type: start
+    task:
+      id: add9c2d0-28f0-581f-83ba-09cac2899e1d
+      version: -1
+      name: ''
+      type: start
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '1':
+    id: '1'
+    taskid: a2954f7c-8b6f-5195-ab74-fd51274e8607
+    type: title
+    task:
+      id: a2954f7c-8b6f-5195-ab74-fd51274e8607
+      version: -1
+      name: INGEST - STAGE
+      description: |-
+        INGEST. Everything Sentinel-specific keys off the incident URL. Parsed once here,
+        then reused by this playbook and by the sync adapter.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '2'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 225
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '2':
+    id: '2'
+    taskid: 0e729074-3213-5029-a2d2-614fc145f495
+    type: condition
+    task:
+      id: 0e729074-3213-5029-a2d2-614fc145f495
+      version: -1
+      name: INGEST - HAS INCIDENT URL?
+      description: |-
+        INGEST. No URL means nothing to fetch. Skip to severity mapping so the incident still
+        gets a canonical object and the parent still has something to decide on.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'NO':
+      - '3'
+      '#default#':
+      - '4'
+    conditions:
+    - label: 'NO'
+      condition:
+      - - operator: isEmpty
+          left:
+            value:
+              simple: incident.incidenturl
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 400
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '3':
+    id: '3'
+    taskid: 046f6575-d65e-5a54-a2d4-cfd29d738c23
+    type: regular
+    task:
+      id: 046f6575-d65e-5a54-a2d4-cfd29d738c23
+      version: -1
+      name: INGEST - FLAG NO INCIDENT URL
+      description: |-
+        INGEST. Observability flag surfaced to the parent via IngestPath. Usually means the
+        classifier or mapper did not populate incidenturl.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '19'
+    scriptarguments:
+      key:
+        simple: IngestPath
+      value:
+        simple: NO_INCIDENT_URL
+      append:
+        simple: 'true'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1770,
+          "y": 575
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '4':
+    id: '4'
+    taskid: 7959f334-7421-5920-9992-5bde36bf6fb8
+    type: regular
+    task:
+      id: 7959f334-7421-5920-9992-5bde36bf6fb8
+      version: -1
+      name: INGEST - PARSE SUBSCRIPTION ID
+      description: |-
+        INGEST. Parses the Azure subscription ID out of the incident URL. Written once here;
+        the sync adapter reads it from context and only re-parses if it is empty.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '5'
+    scriptarguments:
+      key:
+        simple: Sentinel.SubscriptionId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: subscriptions/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 575
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '5':
+    id: '5'
+    taskid: d06b9e5c-5331-5e43-8d57-aebd45c7ecac
+    type: regular
+    task:
+      id: d06b9e5c-5331-5e43-8d57-aebd45c7ecac
+      version: -1
+      name: INGEST - PARSE RESOURCE GROUP
+      description: INGEST. Parses the resource group out of the incident URL.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '6'
+    scriptarguments:
+      key:
+        simple: Sentinel.ResourceGroup
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: resourceGroups/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: /
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 750
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '6':
+    id: '6'
+    taskid: 64554cc7-a8f4-5f36-80a6-e3c0695f95ae
+    type: regular
+    task:
+      id: 64554cc7-a8f4-5f36-80a6-e3c0695f95ae
+      version: -1
+      name: INGEST - PARSE INCIDENT ID
+      description: |-
+        INGEST. Parses the Sentinel incident GUID out of the incident URL. Entity retrieval and
+        rule capture then run in parallel and rejoin at severity mapping.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '7'
+      - '14'
+    scriptarguments:
+      key:
+        simple: Sentinel.IncidentId
+      value:
+        complex:
+          root: incident.incidenturl
+          transformers:
+          - operator: split
+            args:
+              delimiter:
+                value:
+                  simple: Incidents/
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 925
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '7':
+    id: '7'
+    taskid: c3ff2b55-a94a-5cfa-b79b-c42b0c603926
+    type: title
+    task:
+      id: c3ff2b55-a94a-5cfa-b79b-c42b0c603926
+      version: -1
+      name: ENTITY - STAGE
+      description: |-
+        ENTITY. Sentinel attaches entities asynchronously, so XSOAR often fetches the incident
+        before they exist. One bounded loop, no unrolled retries.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '8'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1100
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '8':
+    id: '8'
+    taskid: 59c9e586-2463-5764-9bf4-5b87ef3c4837
+    type: regular
+    task:
+      id: 59c9e586-2463-5764-9bf4-5b87ef3c4837
+      version: -1
+      name: ENTITY - LIST INCIDENT ENTITIES
+      description: |-
+        ENTITY. Looped fetch, exit as soon as entities appear. 45 second wait, 4 attempts max.
+        Loop settings live on the task because XSOAR does not allow them as inputs.
+      script: Azure Sentinel|||azure-sentinel-list-incident-entities
+      type: regular
+      iscommand: true
+      brand: Azure Sentinel
+    nexttasks:
+      '#none#':
+      - '9'
+      '#error#':
+      - '11'
+    scriptarguments:
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      using:
+        simple: ${incident.sourceInstance}
+    loop:
+      iscommand: false
+      exitCondition: ''
+      wait: 45
+      max: 4
+      builtincondition:
+      - - operator: isNotEmpty
+          left:
+            value:
+              simple: AzureSentinel.IncidentEntity
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1275
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '9':
+    id: '9'
+    taskid: 0a0d16b3-4ccb-5de2-b517-80d1fbfa53df
+    type: condition
+    task:
+      id: 0a0d16b3-4ccb-5de2-b517-80d1fbfa53df
+      version: -1
+      name: ENTITY - HAVE ENTITIES?
+      description: |-
+        ENTITY. Belt and braces after the loop, in case it exits on max attempts rather than on
+        the exit condition. One outcome only, never a retry and a failure at the same time.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'NO':
+      - '11'
+      '#default#':
+      - '10'
+    conditions:
+    - label: 'NO'
+      condition:
+      - - operator: isEmpty
+          left:
+            value:
+              simple: AzureSentinel.IncidentEntity
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1450
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '10':
+    id: '10'
+    taskid: 93062849-3556-5ffd-a4f6-ee0c1d50736c
+    type: regular
+    task:
+      id: 93062849-3556-5ffd-a4f6-ee0c1d50736c
+      version: -1
+      name: ENTITY - NORMALISE ENTITIES
+      description: |-
+        ENTITY. Handles Sentinel's inconsistent payloads by fingerprinting on field names,
+        because the kind field cannot be relied on. Outputs SentinelEntities with a flat Values list.
+      scriptName: SentinelEntityExtraction-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '12'
+      '#error#':
+      - '11'
+    scriptarguments:
+      Entities:
+        simple: ${AzureSentinel.IncidentEntity.Properties}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1625
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: Microsoft Sentinel Entities
+      output:
+        simple: ${SentinelEntities}
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '11':
+    id: '11'
+    taskid: af918736-b82b-5aac-8857-b4144e9e4d85
+    type: regular
+    task:
+      id: af918736-b82b-5aac-8857-b4144e9e4d85
+      version: -1
+      name: ENTITY - FLAG ENTITIES UNAVAILABLE
+      description: |-
+        ENTITY. Entities never arrived, or could not be normalised. Surfaced to the parent via
+        IngestPath so the analyst knows enrichment was blind.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '13'
+    scriptarguments:
+      key:
+        simple: IngestPath
+      value:
+        simple: ENTITIES_UNAVAILABLE
+      append:
+        simple: 'true'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 1800
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '12':
+    id: '12'
+    taskid: 098f8b72-8dea-5211-9963-35579529e180
+    type: regular
+    task:
+      id: 098f8b72-8dea-5211-9963-35579529e180
+      version: -1
+      name: ENTITY - SET EXTRACTED ENTITIES
+      description: |-
+        ENTITY. Publishes the flat entity value list under the vendor-neutral key the parent
+        consumes for indicator enrichment.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '19'
+    scriptarguments:
+      key:
+        simple: ExtractedEntities
+      value:
+        simple: ${SentinelEntities.Values}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1975
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '13':
+    id: '13'
+    taskid: 8a39aef6-e44b-51de-be5e-718347f0f64c
+    type: regular
+    task:
+      id: 8a39aef6-e44b-51de-be5e-718347f0f64c
+      version: -1
+      name: ENTITY - SET EMPTY ENTITIES
+      description: |-
+        ENTITY. Contract says ExtractedEntities is always present. An empty list, never an
+        unset key, so the parent's HAS INDICATORS check is deterministic.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '19'
+    scriptarguments:
+      key:
+        simple: ExtractedEntities
+      value:
+        simple: '[]'
+    separatecontext: false
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 1975
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '14':
+    id: '14'
+    taskid: 16c83ad9-b71a-512a-aa8d-104de5c64f78
+    type: title
+    task:
+      id: 16c83ad9-b71a-512a-aa8d-104de5c64f78
+      version: -1
+      name: RULE - STAGE
+      description: |-
+        RULE. Re-runs the triggering analytics rule so the analyst sees the raw hits. Runs in
+        parallel with entity retrieval. Any failure flags and degrades, never stops.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '15'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 1100
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '15':
+    id: '15'
+    taskid: 3798e93e-c544-5690-98ab-517d2c85ff6b
+    type: regular
+    task:
+      id: 3798e93e-c544-5690-98ab-517d2c85ff6b
+      version: -1
+      name: RULE - CAPTURE ALERT RULE
+      description: |-
+        RULE. Fetches the analytics rule definition using the first related rule ID on the
+        incident. Gives us the KQL and the rule's own query period.
+      script: Azure Sentinel|||azure-sentinel-list-alert-rule
+      type: regular
+      iscommand: true
+      brand: Azure Sentinel
+    nexttasks:
+      '#none#':
+      - '16'
+      '#error#':
+      - '18'
+    scriptarguments:
+      subscription_id:
+        simple: ${Sentinel.SubscriptionId}
+      resource_group_name:
+        simple: ${Sentinel.ResourceGroup}
+      using:
+        simple: ${incident.sourceInstance}
+      rule_id:
+        complex:
+          root: incident.labels
+          accessor: relatedAnalyticRuleIds
+          transformers:
+          - operator: atIndex
+            args:
+              index:
+                value:
+                  simple: '0'
+          - operator: replace
+            args:
+              toReplace:
+                value:
+                  simple: '['
+              replaceWith: {}
+              limit: {}
+          - operator: replace
+            args:
+              toReplace:
+                value:
+                  simple: '"'
+              replaceWith: {}
+              limit: {}
+          - operator: replace
+            args:
+              toReplace:
+                value:
+                  simple: ']'
+              replaceWith: {}
+              limit: {}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 1275
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '16':
+    id: '16'
+    taskid: ed61c86d-981a-517a-9140-5044b25f92bb
+    type: regular
+    task:
+      id: ed61c86d-981a-517a-9140-5044b25f92bb
+      version: -1
+      name: RULE - SET KQL FIELD
+      description: |-
+        RULE. Writes the rule's KQL onto the incident so the analyst can read and re-run it
+        without leaving XSOAR. Cosmetic, continue on error.
+      scriptName: Set-FieldValue-UKDEV
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '17'
+    scriptarguments:
+      field:
+        simple: kqlqueryeditor
+      value:
+        simple: ${AzureSentinel.AlertRule.properties.query}
+    separatecontext: false
+    timeout: 60
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 1450
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '17':
+    id: '17'
+    taskid: 019b66e1-c9f1-5048-9f78-4a02140779ab
+    type: regular
+    task:
+      id: 019b66e1-c9f1-5048-9f78-4a02140779ab
+      version: -1
+      name: RULE - RUN RULE QUERY
+      description: |-
+        RULE. Executes the rule's own KQL against the customer workspace, capped at 100 rows.
+        Results are folded into the investigation pack as the RULE_RERUN leg, not rendered twice.
+      script: Azure Log Analytics|||azure-log-analytics-execute-query
+      type: regular
+      iscommand: true
+      brand: Azure Log Analytics
+    nexttasks:
+      '#none#':
+      - '19'
+      '#error#':
+      - '18'
+    scriptarguments:
+      using:
+        simple: ${inputs.LogAnalyticsInstance}
+      timespan:
+        simple: ${AzureSentinel.AlertRule.properties.queryPeriod}
+      query:
+        complex:
+          root: AzureSentinel.AlertRule.properties.query
+          transformers:
+          - operator: concat
+            args:
+              prefix: {}
+              suffix:
+                value:
+                  simple: |2-
+
+                    | take 100
+    separatecontext: false
+    timeout: 300
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 1625
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '18':
+    id: '18'
+    taskid: bea31a69-257d-5ee0-b598-063bccdda4eb
+    type: regular
+    task:
+      id: bea31a69-257d-5ee0-b598-063bccdda4eb
+      version: -1
+      name: RULE - FLAG RULE QUERY FAILED
+      description: |-
+        RULE. Rule capture or execution failed. Flagged on IngestPath and recorded in
+        Investigation.Errors by the pack. Investigation continues without the rule leg.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '19'
+    scriptarguments:
+      key:
+        simple: IngestPath
+      value:
+        simple: RULE_QUERY_FAILED
+      append:
+        simple: 'true'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1340,
+          "y": 1800
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '19':
+    id: '19'
+    taskid: 1893e1ee-0767-530b-bf80-0ef4745d8151
+    type: regular
+    task:
+      id: 1893e1ee-0767-530b-bf80-0ef4745d8151
+      version: -1
+      name: INGEST - MAP SEVERITY
+      description: |-
+        INGEST. Join point for both branches and every skip path above. Converts Sentinel
+        severity to the canonical 1-4 scale. Contract task: stop on error, parent takes over.
+      scriptName: SeverityMapper-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '20'
+    scriptarguments:
+      severity:
+        simple: ${incident.labels.Severity}
+      source:
+        simple: sentinel
+    separatecontext: false
+    timeout: 120
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2150
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '20':
+    id: '20'
+    taskid: 0198b85e-a3e1-50d8-9673-e22e4e6f54ee
+    type: regular
+    task:
+      id: 0198b85e-a3e1-50d8-9673-e22e4e6f54ee
+      version: -1
+      name: INGEST - BUILD FINGERPRINT
+      description: |-
+        INGEST. Hashes rule name plus sorted primary entity values into a stable fingerprint.
+        This is what makes recurrence entity-aware instead of name-only.
+      scriptName: TriageFingerprint-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '21'
+    scriptarguments:
+      rule_name:
+        simple: ${incident.name}
+      entities:
+        simple: ${SentinelEntities}
+    separatecontext: false
+    timeout: 120
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2325
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: Triage Fingerprint
+      output:
+        simple: ${TriageFingerprint.Value}
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '21':
+    id: '21'
+    taskid: 762222e4-d0a6-59bd-b7bf-71998e610e5c
+    type: title
+    task:
+      id: 762222e4-d0a6-59bd-b7bf-71998e610e5c
+      version: -1
+      name: INVESTIGATE - STAGE
+      description: |-
+        INVESTIGATE. Severity-gated automated investigation. Runs after severity mapping so the
+        gate has the canonical value to read.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '22'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2500
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '22':
+    id: '22'
+    taskid: 915af3fd-32fe-5f57-8a9e-00a793167679
+    type: condition
+    task:
+      id: 915af3fd-32fe-5f57-8a9e-00a793167679
+      version: -1
+      name: INVESTIGATE - DEPTH SELECT
+      description: |-
+        INVESTIGATE. Canonical 1 to 3 get the full pack. Canonical 4 gets the light pack: the
+        rule re-run and related alerts only.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      FULL:
+      - '23'
+      '#default#':
+      - '24'
+    conditions:
+    - label: FULL
+      condition:
+      - - operator: inList
+          left:
+            value:
+              simple: SeverityMapping.mapped_severity
+            iscontext: true
+          right:
+            value:
+              simple: ${inputs.FullInvestigationSeverities}
+            iscontext: true
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2675
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '23':
+    id: '23'
+    taskid: af5af609-4354-55ab-9029-c30a263d37e8
+    type: regular
+    task:
+      id: af5af609-4354-55ab-9029-c30a263d37e8
+      version: -1
+      name: INVESTIGATE - RUN PACK FULL
+      description: |-
+        INVESTIGATE. One composite KQL per entity via union isfuzzy, so a workspace missing a
+        table degrades instead of failing. One task, no loop. Best effort throughout.
+      scriptName: InvestigationPack-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '25'
+    scriptarguments:
+      entities:
+        simple: ${SentinelEntities}
+      depth:
+        simple: full
+      la_instance:
+        simple: ${inputs.LogAnalyticsInstance}
+      alert_time:
+        simple: ${incident.created}
+      rule_results:
+        simple: ${AzureLogAnalytics.Query}
+      max_entities:
+        simple: ${inputs.MaxInvestigationEntities}
+    separatecontext: false
+    timeout: 900
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2850
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '24':
+    id: '24'
+    taskid: 01584eed-59e7-5636-89af-7248a037fcba
+    type: regular
+    task:
+      id: 01584eed-59e7-5636-89af-7248a037fcba
+      version: -1
+      name: INVESTIGATE - RUN PACK LIGHT
+      description: |-
+        INVESTIGATE. Light depth for canonical 4. Rule re-run and related alerts only, so
+        informational noise does not cost eight Log Analytics queries each.
+      scriptName: InvestigationPack-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '25'
+    scriptarguments:
+      entities:
+        simple: ${SentinelEntities}
+      depth:
+        simple: light
+      la_instance:
+        simple: ${inputs.LogAnalyticsInstance}
+      alert_time:
+        simple: ${incident.created}
+      rule_results:
+        simple: ${AzureLogAnalytics.Query}
+      max_entities:
+        simple: ${inputs.MaxInvestigationEntities}
+    separatecontext: false
+    timeout: 600
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 2850
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '25':
+    id: '25'
+    taskid: ca228f4a-071b-5562-a218-bf31a7b74874
+    type: regular
+    task:
+      id: ca228f4a-071b-5562-a218-bf31a7b74874
+      version: -1
+      name: INVESTIGATE - RENDER RESULTS
+      description: |-
+        INVESTIGATE. Renders the full result tables into the incident as markdown, once, from
+        both the rule re-run and the pack. The raw context copy is deleted immediately after.
+      scriptName: InvestigationResultsMD-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '26'
+    scriptarguments:
+      json_data:
+        simple: ${InvestigationRaw}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 3025
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: InvestigationResultCodeBlock
+      output:
+        simple: ${InvestigationResultsMD}
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '26':
+    id: '26'
+    taskid: 842a58ed-e64b-5187-8a12-ca68e19e326d
+    type: regular
+    task:
+      id: 842a58ed-e64b-5187-8a12-ca68e19e326d
+      version: -1
+      name: INVESTIGATE - PRUNE RAW
+      description: |-
+        INVESTIGATE. Stage boundary cleanup. The distilled Investigation object is already
+        written, so the raw entity JSON, rule payload and query rows go.
+      scriptName: DeleteContext
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '27'
+    scriptarguments:
+      key:
+        simple: InvestigationRaw,AzureLogAnalytics,AzureSentinel.IncidentEntity,AzureSentinel.AlertRule
+      subplaybook:
+        simple: auto
+    separatecontext: false
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 3200
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '27':
+    id: '27'
+    taskid: cacb80da-2194-5965-a41a-1bb09ae4a663
+    type: regular
+    task:
+      id: cacb80da-2194-5965-a41a-1bb09ae4a663
+      version: -1
+      name: INGEST - BUILD CANONICAL INCIDENT
+      description: |-
+        INGEST. Builds the vendor-neutral CanonicalIncident. investigation_results now receives
+        the distilled summary, not the raw rows. Contract task: stop on error.
+      scriptName: NomiosCanonicalSchemaUK
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '28'
+    scriptarguments:
+      title:
+        simple: ${incident.name}
+      description:
+        simple: ${incident.description}
+      incident_id:
+        simple: ${Sentinel.IncidentId}
+      incident_url:
+        simple: ${incident.incidenturl}
+      severity:
+        simple: ${SeverityMapping.mapped_severity}
+      status:
+        simple: ${incident.labels.Status}
+      mitre_tactics:
+        simple: ${incident.labels.Tactics}
+      source_product:
+        simple: Microsoft Sentinel
+      source_vendor:
+        simple: Microsoft
+      source_technology:
+        simple: SIEM
+      source_instance:
+        simple: ${incident.sourceInstance}
+      time_generated:
+        simple: ${incident.created}
+      investigation_results:
+        simple: ${Investigation.Summary}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 3375
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '28':
+    id: '28'
+    taskid: f36e15e8-5e17-5f90-a52c-1eef3f1e0341
+    type: regular
+    task:
+      id: f36e15e8-5e17-5f90-a52c-1eef3f1e0341
+      version: -1
+      name: INGEST - ATTACH FINGERPRINT
+      description: |-
+        INGEST. Adds the fingerprint onto the canonical object so the parent's recurrence check
+        stays vendor-neutral. Last task in the adapter.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    scriptarguments:
+      key:
+        simple: CanonicalIncident.fingerprint
+      value:
+        simple: ${TriageFingerprint.Value}
+    separatecontext: false
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 3550
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 3750,
+        "width": 2150,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs:
+- key: LogAnalyticsInstance
+  value:
+    simple: WC_Tyrell_SoC_LAW
+  required: true
+  description: Azure Log Analytics instance for this customer workspace. Used by the rule re-run and the
+    investigation pack.
+  playbookInputQuery: null
+- key: FullInvestigationSeverities
+  value:
+    simple: 1,2,3
+  required: true
+  description: Canonical severities that get the full investigation pack. Everything else gets light depth.
+  playbookInputQuery: null
+- key: MaxInvestigationEntities
+  value:
+    simple: '8'
+  required: true
+  description: Hard cap on entities passed to the investigation pack, so one noisy incident cannot fan
+    out into forty Log Analytics queries.
+  playbookInputQuery: null
+outputs:
+- contextPath: CanonicalIncident
+  description: Vendor-neutral canonical incident object, including the triage fingerprint.
+  type: unknown
+- contextPath: ExtractedEntities
+  description: Flat list of extracted entity values for indicator enrichment.
+  type: unknown
+- contextPath: Investigation
+  description: Distilled investigation results plus Summary counters and Errors.
+  type: unknown
+- contextPath: IngestPath
+  description: Observability flags raised during ingest.
+  type: unknown
+fromversion: 6.10.0

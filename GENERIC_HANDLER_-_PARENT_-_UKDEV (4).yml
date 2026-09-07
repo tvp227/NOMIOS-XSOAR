@@ -1,0 +1,4045 @@
+id: a1f4c2d8-3b6e-4f0a-9c21-7d5e8b4a1c90
+version: 78
+contentitemexportablefields:
+  contentitemfields:
+    packID: ''
+    packName: ''
+    itemVersion: ''
+    fromServerVersion: ''
+    toServerVersion: ''
+    propagationLabels:
+    - all
+    definitionid: ''
+    prevname: ''
+    isoverridable: false
+vcShouldKeepItemLegacyProdMachine: false
+name: GENERIC HANDLER - PARENT - UKDEV
+description: |-
+  Vendor-neutral triage handler. ADAPTER CONTRACT v1.0.
+  Five stages: SETUP, ROUTE, ENRICH, DECIDE, ACT. Between SIEM SELECT and SYNC SELECT
+  it references only CanonicalIncident, ExtractedEntities, IncidentIndicators,
+  Investigation.* and Triage.*, never a vendor context path.
+  A new SIEM is one ingest adapter, one sync adapter, one branch on each SELECT.
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    taskid: 10ca5dae-dfe6-5cc4-b42c-fdd4d91e17b5
+    type: start
+    task:
+      id: 10ca5dae-dfe6-5cc4-b42c-fdd4d91e17b5
+      version: -1
+      name: ''
+      type: start
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '1'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '1':
+    id: '1'
+    taskid: 8bc50bda-3832-5605-b4e9-712fd1cbe928
+    type: title
+    task:
+      id: 8bc50bda-3832-5605-b4e9-712fd1cbe928
+      version: -1
+      name: SETUP - STAGE
+      description: |-
+        STAGE 1 - SETUP. Stamps the run marker and the placeholder cards, then starts
+        the SLA clock. Everything here is cosmetic or idempotency, nothing decides anything.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '2'
+      - '3'
+      - '4'
+      - '5'
+      - '6'
+      - '7'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 225
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '2':
+    id: '2'
+    taskid: 2e1e680a-7a53-5655-83de-68d429fcfa62
+    type: regular
+    task:
+      id: 2e1e680a-7a53-5655-83de-68d429fcfa62
+      version: -1
+      name: SETUP - SET RUN ID
+      description: |-
+        STAGE 1 - SETUP. Triage.RunId is the idempotency marker. SYNC prefixes its comment
+        with it and skips if that prefix already exists on the source incident.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '8'
+    scriptarguments:
+      key:
+        simple: Triage.RunId
+      value:
+        simple: ${incident.id}-${incident.created}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 400
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '3':
+    id: '3'
+    taskid: 28a28a89-bf7d-5e15-b746-b35044c533b8
+    type: regular
+    task:
+      id: 28a28a89-bf7d-5e15-b746-b35044c533b8
+      version: -1
+      name: SETUP - SET DEFAULT CLASSIFICATION
+      description: |-
+        STAGE 1 - SETUP. Default close classification. Only the AUTO-CLOSE branch overrides it,
+        so every other path reaches SYNC with a valid value already set.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '8'
+    scriptarguments:
+      key:
+        simple: Triage.Classification
+      value:
+        simple: Undetermined
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 575
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '4':
+    id: '4'
+    taskid: 574e1ae1-08d2-57c1-9680-3022f4b4781b
+    type: regular
+    task:
+      id: 574e1ae1-08d2-57c1-9680-3022f4b4781b
+      version: -1
+      name: SETUP - SET DEFAULT CLASSIFICATION REASON
+      description: |-
+        STAGE 1 - SETUP. UNSET is a sentinel value. SYNC strips it before calling Sentinel,
+        because Sentinel rejects a classification reason alongside Undetermined.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '8'
+    scriptarguments:
+      key:
+        simple: Triage.ClassificationReason
+      value:
+        simple: UNSET
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 575
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '5':
+    id: '5'
+    taskid: 9587d813-e074-5c2f-983e-8dd80b9c7489
+    type: regular
+    task:
+      id: 9587d813-e074-5c2f-983e-8dd80b9c7489
+      version: -1
+      name: SETUP - SET LOADING OVERVIEW
+      description: |-
+        STAGE 1 - SETUP. Placeholder card so the analyst sees something immediately.
+        Cosmetic, continue on error.
+      scriptName: Set-FieldValue-UKDEV
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '8'
+    scriptarguments:
+      field:
+        simple: incidentoverview
+      value:
+        simple: '<div style="font-family:''Segoe UI'',Helvetica,Arial,sans-serif;color:inherit;border:1px
+          solid #7C838D;border-left:4px solid #0080FF;border-radius:4px;padding:18px 22px;"><span style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#0080FF;">Processing</span><h2
+          style="margin:10px 0 6px;font-size:18px;font-weight:600;color:inherit;">${incident.name}</h2><p
+          style="margin:0;font-size:13px;line-height:1.55;color:inherit;">${incident.description}</p></div>'
+    separatecontext: false
+    timeout: 60
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 400
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '6':
+    id: '6'
+    taskid: d0fdeb26-5305-5fad-a1cc-eae06e79d5c5
+    type: regular
+    task:
+      id: d0fdeb26-5305-5fad-a1cc-eae06e79d5c5
+      version: -1
+      name: SETUP - SET LOADING AI SUMMARY
+      description: |-
+        STAGE 1 - SETUP. Placeholder text while the summary is generated.
+        Cosmetic, continue on error.
+      scriptName: Set-FieldValue-UKDEV
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '8'
+    scriptarguments:
+      field:
+        simple: aisummary
+      value:
+        simple: Generating incident summary...
+    separatecontext: false
+    timeout: 60
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 1340,
+          "y": 400
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '7':
+    id: '7'
+    taskid: 22a5c9f3-3a6a-52e7-a81a-d4d0d8bc6790
+    type: regular
+    task:
+      id: 22a5c9f3-3a6a-52e7-a81a-d4d0d8bc6790
+      version: -1
+      name: SETUP - SET CUSTOMER CONTEXT
+      description: |-
+        STAGE 1 - SETUP. Stamps the customer onto the incident from the source instance.
+        Cosmetic, continue on error.
+      scriptName: set-CustomerContexField-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '8'
+    separatecontext: false
+    timeout: 120
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 1770,
+          "y": 400
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '8':
+    id: '8'
+    taskid: 4a19fadc-931f-5e99-95a7-aa9d2db5a3b7
+    type: playbook
+    task:
+      id: 4a19fadc-931f-5e99-95a7-aa9d2db5a3b7
+      version: -1
+      name: SETUP - START SLA TIMERS
+      description: |-
+        STAGE 1 - SETUP. Starts the SLA timers from detection time. Runs before routing on
+        purpose so MANUAL REVIEW incidents also have a clock.
+      playbookName: SLAs initialization - Shared
+      type: playbook
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '9'
+    scriptarguments:
+      AlertDetectionTime:
+        simple: ${incident.createdtime}
+    separatecontext: true
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 750
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '9':
+    id: '9'
+    taskid: a93ed3a7-bafb-5abb-afa5-8462b42ce1e8
+    type: title
+    task:
+      id: a93ed3a7-bafb-5abb-afa5-8462b42ce1e8
+      version: -1
+      name: ROUTE - STAGE
+      description: |-
+        STAGE 2 - ROUTE. Picks the ingest adapter for the source SIEM and sets Triage.Source
+        so every later stage branches on a canonical token, not a brand string.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '10'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 925
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '10':
+    id: '10'
+    taskid: 3c97c71a-ed75-5ffa-bfb8-0bf578ab2694
+    type: condition
+    task:
+      id: 3c97c71a-ed75-5ffa-bfb8-0bf578ab2694
+      version: -1
+      name: ROUTE - SIEM SELECT
+      description: |-
+        STAGE 2 - ROUTE. Keyed on incident.sourceBrand, set by the fetching integration.
+        Anything without an adapter falls through to MANUAL REVIEW with a reason.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      SENTINEL:
+      - '11'
+      CORTEX:
+      - '12'
+      CHRONICLE:
+      - '13'
+      SENTINELONE:
+      - '14'
+      '#default#':
+      - '16'
+    conditions:
+    - label: SENTINEL
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: incident.sourceBrand
+            iscontext: true
+          right:
+            value:
+              simple: Azure Sentinel
+    - label: CORTEX
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: incident.sourceBrand
+            iscontext: true
+          right:
+            value:
+              simple: Cortex XDR - IR
+    - label: CHRONICLE
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: incident.sourceBrand
+            iscontext: true
+          right:
+            value:
+              simple: Google Chronicle Backstory
+    - label: SENTINELONE
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: incident.sourceBrand
+            iscontext: true
+          right:
+            value:
+              simple: SentinelOne V2
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1100
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '11':
+    id: '11'
+    taskid: 8f3446df-2d64-5310-a76f-fdae11158017
+    type: title
+    task:
+      id: 8f3446df-2d64-5310-a76f-fdae11158017
+      version: -1
+      name: ROUTE - SENTINEL WORKFLOW
+      description: STAGE 2 - ROUTE. Microsoft Sentinel branch. The only adapter pair built today.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '15'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1275
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '12':
+    id: '12'
+    taskid: 1fd73059-8157-55a0-b288-c161914dfc28
+    type: title
+    task:
+      id: 1fd73059-8157-55a0-b288-c161914dfc28
+      version: -1
+      name: ROUTE - CORTEX WORKFLOW
+      description: |-
+        STAGE 2 - ROUTE. Adapter not built. When built it must satisfy ADAPTER CONTRACT v1.0
+        and this title task gets re-pointed at it.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '16'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 1275
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '13':
+    id: '13'
+    taskid: f1016d91-4e53-5236-aabd-9af40c315ed6
+    type: title
+    task:
+      id: f1016d91-4e53-5236-aabd-9af40c315ed6
+      version: -1
+      name: ROUTE - CHRONICLE WORKFLOW
+      description: STAGE 2 - ROUTE. Adapter not built. Same contract applies.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '16'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1340,
+          "y": 1275
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '14':
+    id: '14'
+    taskid: 42e87bc2-1c11-5003-a44d-9096acd90fef
+    type: title
+    task:
+      id: 42e87bc2-1c11-5003-a44d-9096acd90fef
+      version: -1
+      name: ROUTE - SENTINELONE WORKFLOW
+      description: STAGE 2 - ROUTE. Adapter not built. Same contract applies.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '16'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1770,
+          "y": 1275
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '15':
+    id: '15'
+    taskid: 1279ef2e-21c7-583f-aaee-398b545149a3
+    type: regular
+    task:
+      id: 1279ef2e-21c7-583f-aaee-398b545149a3
+      version: -1
+      name: ROUTE - SET SOURCE SENTINEL
+      description: |-
+        STAGE 2 - ROUTE. Canonical source token. SYNC SELECT reads this rather than the brand
+        string, so the write-back choice survives a failed ingest.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '18'
+    scriptarguments:
+      key:
+        simple: Triage.Source
+      value:
+        simple: SENTINEL
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1450
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '16':
+    id: '16'
+    taskid: 8e4bf590-b5b9-5dfe-a0ef-39f3ccfb6e11
+    type: regular
+    task:
+      id: 8e4bf590-b5b9-5dfe-a0ef-39f3ccfb6e11
+      version: -1
+      name: ROUTE - SET SOURCE UNSUPPORTED
+      description: |-
+        STAGE 2 - ROUTE. No adapter for this brand. Canonical token is UNKNOWN, which means
+        SYNC SELECT will skip write-back rather than guess an adapter.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '17'
+    scriptarguments:
+      key:
+        simple: Triage.Source
+      value:
+        simple: UNKNOWN
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 1450
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '17':
+    id: '17'
+    taskid: 0b3921c0-2f8a-588f-b3c4-8d8dada8a5e5
+    type: regular
+    task:
+      id: 0b3921c0-2f8a-588f-b3c4-8d8dada8a5e5
+      version: -1
+      name: ROUTE - FLAG NO ADAPTER
+      description: |-
+        STAGE 2 - ROUTE. Records why automation stopped so the analyst does not have to read
+        the War Room to find out.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '20'
+    scriptarguments:
+      key:
+        simple: Triage.IngestError
+      value:
+        simple: No ingest adapter is built for source brand ${incident.sourceBrand}.
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 1625
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '18':
+    id: '18'
+    taskid: e3f19135-7218-5847-a30d-80e4f665bd17
+    type: playbook
+    task:
+      id: e3f19135-7218-5847-a30d-80e4f665bd17
+      version: -1
+      name: ROUTE - RUN SENTINEL INGEST
+      description: |-
+        STAGE 2 - ROUTE. Sentinel ingest adapter. Outputs CanonicalIncident, ExtractedEntities
+        and Investigation. On error there is no canonical object, so triage hands to an analyst.
+      playbookName: INGEST AND INVESTIGATE - SENTINEL - UKDEV
+      type: playbook
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '25'
+      '#error#':
+      - '19'
+    scriptarguments:
+      LogAnalyticsInstance:
+        simple: ${inputs.LogAnalyticsInstance}
+    separatecontext: false
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1625
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '19':
+    id: '19'
+    taskid: 745d61f6-bffd-560c-8c87-708a885cd0d7
+    type: regular
+    task:
+      id: 745d61f6-bffd-560c-8c87-708a885cd0d7
+      version: -1
+      name: ROUTE - FLAG INGEST ERROR
+      description: |-
+        STAGE 2 - ROUTE. Captures the adapter failure entry into Triage.IngestError, which the
+        MANUAL REVIEW narrative and the Sentinel comment both quote.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '20'
+    scriptarguments:
+      key:
+        simple: Triage.IngestError
+      value:
+        simple: 'Sentinel ingest adapter failed: ${lastCompletedTaskEntries}'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 1800
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '20':
+    id: '20'
+    taskid: 3ce9ebf3-970d-5d8f-a112-720da1624ee8
+    type: title
+    task:
+      id: 3ce9ebf3-970d-5d8f-a112-720da1624ee8
+      version: -1
+      name: MANUAL REVIEW
+      description: |-
+        STAGE 2 - ROUTE. Fail-safe sink: unknown source, adapter not built, or ingest errored.
+        Still sets a disposition, still builds a narrative, still writes back to the source.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '21'
+      - '22'
+      - '23'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 2630,
+          "y": 1975
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '21':
+    id: '21'
+    taskid: 2b63f8b3-efb8-52c4-aaa6-bf426e555e87
+    type: regular
+    task:
+      id: 2b63f8b3-efb8-52c4-aaa6-bf426e555e87
+      version: -1
+      name: ACT - SET OVERVIEW MANUAL REVIEW
+      description: |-
+        STAGE 5 - ACT. Swaps the processing placeholder for an explicit manual review card so
+        the analyst knows automation stopped and why.
+      scriptName: Set-FieldValue-UKDEV
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '24'
+    scriptarguments:
+      field:
+        simple: incidentoverview
+      value:
+        simple: '<div style="font-family:''Segoe UI'',Helvetica,Arial,sans-serif;color:inherit;border:1px
+          solid #7C838D;border-left:4px solid #E5484D;border-radius:4px;padding:18px 22px;"><span style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#E5484D;">Manual
+          review required</span><h2 style="margin:10px 0 6px;font-size:18px;font-weight:600;color:inherit;">${incident.name}</h2><p
+          style="margin:0;font-size:13px;line-height:1.55;color:inherit;">${Triage.IngestError}</p></div>'
+    separatecontext: false
+    timeout: 60
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 2200,
+          "y": 2150
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '22':
+    id: '22'
+    taskid: 7ad0ecd0-dc13-56cf-9898-c6b0ad84e2d9
+    type: regular
+    task:
+      id: 7ad0ecd0-dc13-56cf-9898-c6b0ad84e2d9
+      version: -1
+      name: ACT - SET SUMMARY MANUAL REVIEW
+      description: |-
+        STAGE 5 - ACT. Same message in the AI Summary field so it shows wherever the layout
+        renders that field.
+      scriptName: Set-FieldValue-UKDEV
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '24'
+    scriptarguments:
+      field:
+        simple: aisummary
+      value:
+        simple: Automated triage did not run. ${Triage.IngestError} Manual review required.
+    separatecontext: false
+    timeout: 60
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 2630,
+          "y": 2150
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '23':
+    id: '23'
+    taskid: 610f1248-9f25-593c-80e1-077eda2a7f41
+    type: regular
+    task:
+      id: 610f1248-9f25-593c-80e1-077eda2a7f41
+      version: -1
+      name: ACT - SET DISPOSITION MANUAL-REVIEW
+      description: |-
+        STAGE 5 - ACT. Records the outcome. Also mapped to the Triage Disposition field for
+        dashboards.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '24'
+    scriptarguments:
+      key:
+        simple: Triage.Disposition
+      value:
+        simple: MANUAL-REVIEW
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 3060,
+          "y": 2150
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: Triage Disposition
+      output:
+        simple: ${Triage.Disposition}
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '24':
+    id: '24'
+    taskid: b236a537-227d-51db-ab4a-691b0b4cd88b
+    type: regular
+    task:
+      id: b236a537-227d-51db-ab4a-691b0b4cd88b
+      version: -1
+      name: ACT - BUILD MANUAL NARRATIVE
+      description: |-
+        STAGE 5 - ACT. Deterministic narrative. No AI on this path because there is nothing
+        reliable to summarise, but SYNC still gets a comment to post.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '85'
+    scriptarguments:
+      key:
+        simple: Triage.Narrative
+      value:
+        simple: |-
+          AUTOMATED TRIAGE DID NOT COMPLETE.
+
+          Reason: ${Triage.IngestError}
+          Source: ${Triage.Source}
+          Incident: ${incident.name}
+
+          This incident has been routed to the SOC for manual review.
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 2630,
+          "y": 2325
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: AI Summary
+      output:
+        simple: ${Triage.Narrative}
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '25':
+    id: '25'
+    taskid: 7f3e29e3-1311-5b34-8234-11f79adbc2db
+    type: title
+    task:
+      id: 7f3e29e3-1311-5b34-8234-11f79adbc2db
+      version: -1
+      name: ENRICH - STAGE
+      description: |-
+        STAGE 3 - ENRICH. Shared section starts here. Only CanonicalIncident, ExtractedEntities,
+        IncidentIndicators, Investigation and Triage.* may be referenced from now on.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '26'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 1975
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '26':
+    id: '26'
+    taskid: b1bb8345-efe8-5fb0-8dba-714a07eb1697
+    type: regular
+    task:
+      id: b1bb8345-efe8-5fb0-8dba-714a07eb1697
+      version: -1
+      name: ENRICH - PULL INCIDENT INDICATORS
+      description: |-
+        STAGE 3 - ENRICH. Lists indicators linked to this incident as IncidentIndicators.
+        On error the matrix simply loses the GTI signal and escalates by default.
+      scriptName: ShowIncidentIndicatorsWithArgs-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '27'
+    scriptarguments:
+      incident_id:
+        simple: ${incident.id}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2150
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '27':
+    id: '27'
+    taskid: 3a7de209-7d2e-580f-b10c-6041abfe14f7
+    type: condition
+    task:
+      id: 3a7de209-7d2e-580f-b10c-6041abfe14f7
+      version: -1
+      name: ENRICH - HAS INDICATORS?
+      description: |-
+        STAGE 3 - ENRICH. Nothing to enrich means skip straight to prevalence. Saves a GTI
+        round trip and the enrichment wait on entity-less incidents.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'NO':
+      - '28'
+      '#default#':
+      - '29'
+    conditions:
+    - label: 'NO'
+      condition:
+      - - operator: isEqualNumber
+          left:
+            value:
+              simple: IncidentIndicators.Count
+            iscontext: true
+          right:
+            value:
+              simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2325
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '28':
+    id: '28'
+    taskid: 56198b16-4a9b-5d16-ba80-06fc45292c92
+    type: title
+    task:
+      id: 56198b16-4a9b-5d16-ba80-06fc45292c92
+      version: -1
+      name: ENRICH - NO INDICATORS
+      description: |-
+        STAGE 3 - ENRICH. No entities were extracted. Enrichment is skipped and the matrix
+        falls through on severity and recurrence alone.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '33'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 2500
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '29':
+    id: '29'
+    taskid: 5ca43a25-878f-598c-93fa-dfdf1d2defd7
+    type: regular
+    task:
+      id: 5ca43a25-878f-598c-93fa-dfdf1d2defd7
+      version: -1
+      name: ENRICH - RUN GTI ENRICHMENT
+      description: |-
+        STAGE 3 - ENRICH. GTI enrichment on the extracted entity values. On error (GTI down or
+        quota) verdicts are simply absent, which never produces a false sense of safety.
+      script: Builtin|||enrichIndicators
+      type: regular
+      iscommand: true
+      brand: Builtin
+    nexttasks:
+      '#none#':
+      - '30'
+    scriptarguments:
+      indicatorsValues:
+        simple: ${ExtractedEntities}
+    separatecontext: false
+    timeout: 600
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2500
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '30':
+    id: '30'
+    taskid: 0caaa5b2-681b-5d51-80a0-c728813c5b84
+    type: regular
+    task:
+      id: 0caaa5b2-681b-5d51-80a0-c728813c5b84
+      version: -1
+      name: ENRICH - WAIT FOR VERDICTS
+      description: |-
+        STAGE 3 - ENRICH. enrichIndicators returns before every source has written its verdict.
+        One bounded pause, tunable via EnrichWaitSeconds. No unrolled retries.
+      scriptName: Sleep
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '31'
+    scriptarguments:
+      seconds:
+        simple: ${inputs.EnrichWaitSeconds}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2675
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '31':
+    id: '31'
+    taskid: f5f5de4f-e153-54b2-b720-b8b10e50605b
+    type: regular
+    task:
+      id: f5f5de4f-e153-54b2-b720-b8b10e50605b
+      version: -1
+      name: ENRICH - PULL ENRICHED INDICATORS
+      description: |-
+        STAGE 3 - ENRICH. Single re-read so IncidentIndicators carries the GTI verdicts and the
+        HasGTIMaliciousOrSuspicious flag the matrix keys on.
+      scriptName: ShowIncidentIndicatorsWithArgs-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '32'
+    scriptarguments:
+      incident_id:
+        simple: ${incident.id}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 2850
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '32':
+    id: '32'
+    taskid: 085577e2-6e76-5e5f-ac14-551778fcd352
+    type: regular
+    task:
+      id: 085577e2-6e76-5e5f-ac14-551778fcd352
+      version: -1
+      name: ENRICH - PRUNE RAW GTI
+      description: |-
+        STAGE 3 - ENRICH. Drops the raw enrichment payloads now the distilled verdicts live on
+        IncidentIndicators. Keeps context well inside the 1000 KB governor.
+      scriptName: DeleteContext
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '33'
+    scriptarguments:
+      key:
+        simple: GoogleThreatIntelligence,DBotScore,File,URL,IP,Domain,Account
+      subplaybook:
+        simple: auto
+    separatecontext: false
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 3025
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '33':
+    id: '33'
+    taskid: abe38f87-9fb2-59b5-8847-11e4351de181
+    type: regular
+    task:
+      id: abe38f87-9fb2-59b5-8847-11e4351de181
+      version: -1
+      name: ENRICH - GET INDICATOR PREVALENCE
+      description: |-
+        STAGE 3 - ENRICH. Every other incident these indicators have appeared in. Feeds the AI
+        prompts only, never the matrix. Best effort.
+      scriptName: SearchIndicator
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '34'
+    scriptarguments:
+      query:
+        simple: investigationIDs:${incident.id}
+      add_fields_to_context:
+        simple: id,value,indicator_type,score,investigationIDs
+      size:
+        simple: '200'
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 3200
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '34':
+    id: '34'
+    taskid: e6fd35be-a762-5a8d-8b09-4306a19c21a4
+    type: regular
+    task:
+      id: e6fd35be-a762-5a8d-8b09-4306a19c21a4
+      version: -1
+      name: ENRICH - RENDER INCIDENT OVERVIEW
+      description: |-
+        STAGE 3 - ENRICH. Replaces the loading card with the full summary card, including the
+        Investigation.Summary counters. Cosmetic, continue on error.
+      scriptName: IncidentSummaryHTML-UKDev
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '35'
+    scriptarguments:
+      canonical_incident:
+        simple: ${CanonicalIncident}
+      investigation_summary:
+        simple: ${Investigation.Summary}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 3375
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: Incident Overview
+      output:
+        simple: ${IncidentSummaryHTML}
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '35':
+    id: '35'
+    taskid: 8337393b-e9cd-5775-95b1-623496f93a8b
+    type: title
+    task:
+      id: 8337393b-e9cd-5775-95b1-623496f93a8b
+      version: -1
+      name: DECIDE - STAGE
+      description: |-
+        STAGE 4 - DECIDE. Three named signals are set first, then the matrix is a plain
+        three-way condition on those signals and nothing else.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '36'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 3550
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '36':
+    id: '36'
+    taskid: 313a10e7-3acf-522e-80b9-98f07e592095
+    type: regular
+    task:
+      id: 313a10e7-3acf-522e-80b9-98f07e592095
+      version: -1
+      name: DECIDE - SET RECURRENCE DEFAULT
+      description: |-
+        STAGE 4 - DECIDE. Zero first. A failed or empty recurrence search then reads as not
+        recurring rather than as an unwritten key.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '37'
+    scriptarguments:
+      key:
+        simple: RecurrenceCount
+      value:
+        simple: '0'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 3725
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '37':
+    id: '37'
+    taskid: be3a371b-8a8d-522a-9fdc-916148d1e697
+    type: regular
+    task:
+      id: be3a371b-8a8d-522a-9fdc-916148d1e697
+      version: -1
+      name: DECIDE - CHECK RECURRENCE
+      description: |-
+        STAGE 4 - DECIDE. Counts prior incidents carrying the same triage fingerprint, not the
+        same name. A rule firing on ten different users is not recurring; one user ten times is.
+      scriptName: SearchIncidentsV2
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '38'
+    scriptarguments:
+      query:
+        simple: -id:${incident.id} and triagefingerprint:"${CanonicalIncident.fingerprint}"
+      fromdate:
+        simple: ${inputs.RecurrenceLookbackDays} days ago
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 3900
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '38':
+    id: '38'
+    taskid: 5992fba4-300f-5937-8fe8-cea11ab091c1
+    type: regular
+    task:
+      id: 5992fba4-300f-5937-8fe8-cea11ab091c1
+      version: -1
+      name: DECIDE - SET RECURRENCE COUNT
+      description: |-
+        STAGE 4 - DECIDE. Overwrites the zero default with the real count when the search
+        returned matches.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '39'
+    scriptarguments:
+      key:
+        simple: RecurrenceCount
+      value:
+        complex:
+          root: foundIncidents
+          accessor: id
+          transformers:
+          - operator: count
+    separatecontext: false
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 4075
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '39':
+    id: '39'
+    taskid: b4a7615d-4f5a-5f7b-8204-f4be273dd5f0
+    type: condition
+    task:
+      id: b4a7615d-4f5a-5f7b-8204-f4be273dd5f0
+      version: -1
+      name: DECIDE - SIGNAL THREAT INTEL?
+      description: |-
+        STAGE 4 - DECIDE. Signal one of three. Written on both branches so no downstream task
+        ever reads an unwritten key.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'YES':
+      - '40'
+      '#default#':
+      - '41'
+    conditions:
+    - label: 'YES'
+      condition:
+      - - operator: isTrue
+          left:
+            value:
+              simple: IncidentIndicators.HasGTIMaliciousOrSuspicious
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 4250
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '40':
+    id: '40'
+    taskid: 207d0265-bb3f-5a6d-8242-20484daf4b03
+    type: regular
+    task:
+      id: 207d0265-bb3f-5a6d-8242-20484daf4b03
+      version: -1
+      name: DECIDE - SET SIGNAL THREAT INTEL TRUE
+      description: STAGE 4 - DECIDE. At least one indicator carries a malicious or suspicious GTI verdict.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '42'
+    scriptarguments:
+      key:
+        simple: Triage.Signal.ThreatIntel
+      value:
+        simple: 'true'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 4425
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '41':
+    id: '41'
+    taskid: 0173cd0a-e349-5b2e-8a51-68f5d80450c2
+    type: regular
+    task:
+      id: 0173cd0a-e349-5b2e-8a51-68f5d80450c2
+      version: -1
+      name: DECIDE - SET SIGNAL THREAT INTEL FALSE
+      description: STAGE 4 - DECIDE. No malicious or suspicious verdict, or enrichment did not run.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '42'
+    scriptarguments:
+      key:
+        simple: Triage.Signal.ThreatIntel
+      value:
+        simple: 'false'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 4425
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '42':
+    id: '42'
+    taskid: 214e425e-31b8-5771-876e-0cebb45de4af
+    type: condition
+    task:
+      id: 214e425e-31b8-5771-876e-0cebb45de4af
+      version: -1
+      name: DECIDE - SIGNAL RECURRING?
+      description: |-
+        STAGE 4 - DECIDE. Signal two. Compares the fingerprint count against RecurrenceThreshold,
+        as a context reference rather than a hardcoded number.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'YES':
+      - '43'
+      '#default#':
+      - '44'
+    conditions:
+    - label: 'YES'
+      condition:
+      - - operator: greaterThanOrEqual
+          left:
+            value:
+              simple: RecurrenceCount
+            iscontext: true
+          right:
+            value:
+              simple: ${inputs.RecurrenceThreshold}
+            iscontext: true
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 4600
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '43':
+    id: '43'
+    taskid: 21eebb07-2d8c-5c7c-bd71-b174f6af8242
+    type: regular
+    task:
+      id: 21eebb07-2d8c-5c7c-bd71-b174f6af8242
+      version: -1
+      name: DECIDE - SET SIGNAL RECURRING TRUE
+      description: STAGE 4 - DECIDE. Same fingerprint seen at or above the threshold inside the window.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '45'
+    scriptarguments:
+      key:
+        simple: Triage.Signal.Recurring
+      value:
+        simple: 'true'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 4775
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '44':
+    id: '44'
+    taskid: c93dfb79-78aa-5c2e-a835-a9ba35fd5ea8
+    type: regular
+    task:
+      id: c93dfb79-78aa-5c2e-a835-a9ba35fd5ea8
+      version: -1
+      name: DECIDE - SET SIGNAL RECURRING FALSE
+      description: STAGE 4 - DECIDE. Below the threshold, or the recurrence search failed.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '45'
+    scriptarguments:
+      key:
+        simple: Triage.Signal.Recurring
+      value:
+        simple: 'false'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 4775
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '45':
+    id: '45'
+    taskid: c5c3890c-661d-5139-8765-86fb152e757a
+    type: condition
+    task:
+      id: c5c3890c-661d-5139-8765-86fb152e757a
+      version: -1
+      name: DECIDE - SIGNAL LOW SEVERITY?
+      description: |-
+        STAGE 4 - DECIDE. Signal three. Reads AutoCloseSeverities, which the previous version
+        declared as an input and then never referenced.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'YES':
+      - '46'
+      '#default#':
+      - '47'
+    conditions:
+    - label: 'YES'
+      condition:
+      - - operator: inList
+          left:
+            value:
+              simple: CanonicalIncident.severity
+            iscontext: true
+          right:
+            value:
+              simple: ${inputs.AutoCloseSeverities}
+            iscontext: true
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 4950
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '46':
+    id: '46'
+    taskid: 759b8349-cf5d-5bd0-8599-82c64d98eafd
+    type: regular
+    task:
+      id: 759b8349-cf5d-5bd0-8599-82c64d98eafd
+      version: -1
+      name: DECIDE - SET SIGNAL LOW SEVERITY TRUE
+      description: STAGE 4 - DECIDE. Canonical severity is in the auto-close list.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '48'
+    scriptarguments:
+      key:
+        simple: Triage.Signal.LowSeverity
+      value:
+        simple: 'true'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 5125
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '47':
+    id: '47'
+    taskid: 7f4a96bd-624e-511a-9445-a5e82ad03d3c
+    type: regular
+    task:
+      id: 7f4a96bd-624e-511a-9445-a5e82ad03d3c
+      version: -1
+      name: DECIDE - SET SIGNAL LOW SEVERITY FALSE
+      description: STAGE 4 - DECIDE. Canonical severity is outside the auto-close list.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '48'
+    scriptarguments:
+      key:
+        simple: Triage.Signal.LowSeverity
+      value:
+        simple: 'false'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 5125
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '48':
+    id: '48'
+    taskid: c9ba5202-d5e3-5ff3-8648-de0672ef308c
+    type: title
+    task:
+      id: c9ba5202-d5e3-5ff3-8648-de0672ef308c
+      version: -1
+      name: DECIDE - ESCALATION MATRIX
+      description: |-
+        STAGE 4 - DECIDE. Everything above this line produced three booleans. Everything below
+        reads only those three.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '49'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 5300
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '49':
+    id: '49'
+    taskid: 632e36a6-a3c0-5595-a8b7-bc6d9e7c1720
+    type: condition
+    task:
+      id: 632e36a6-a3c0-5595-a8b7-bc6d9e7c1720
+      version: -1
+      name: DECIDE - MATRIX
+      description: |-
+        STAGE 4 - DECIDE. First match wins: threat intel, then recurrence, then low severity,
+        then default. Default is ESCALATE, so an unknown state always reaches a human.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      ESCALATE:
+      - '75'
+      RECURRING:
+      - '50'
+      AUTO-CLOSE:
+      - '63'
+      '#default#':
+      - '75'
+    conditions:
+    - label: ESCALATE
+      condition:
+      - - operator: isTrue
+          left:
+            value:
+              simple: Triage.Signal.ThreatIntel
+            iscontext: true
+          right:
+            value: {}
+    - label: RECURRING
+      condition:
+      - - operator: isTrue
+          left:
+            value:
+              simple: Triage.Signal.Recurring
+            iscontext: true
+          right:
+            value: {}
+    - label: AUTO-CLOSE
+      condition:
+      - - operator: isTrue
+          left:
+            value:
+              simple: Triage.Signal.LowSeverity
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 5475
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '50':
+    id: '50'
+    taskid: 7b1d2a40-2b05-5400-9f5e-9111758fec26
+    type: title
+    task:
+      id: 7b1d2a40-2b05-5400-9f5e-9111758fec26
+      version: -1
+      name: ACT - RECURRING
+      description: |-
+        STAGE 5 - ACT. Noisy detection. One tuning ticket per rule, not per occurrence, then
+        this occurrence escalates anyway. Recurring is not the same as benign.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '51'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1340,
+          "y": 5650
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '51':
+    id: '51'
+    taskid: 7f02022a-cb22-51d0-bbab-fcf65ce752f0
+    type: regular
+    task:
+      id: 7f02022a-cb22-51d0-bbab-fcf65ce752f0
+      version: -1
+      name: TUNE - FIND OPEN TICKET
+      description: |-
+        STAGE 5 - ACT. Looks for an open tuning ticket for this rule by name, type and status.
+        Native incident linking carries the relationship, so no ticket-ID field is needed.
+      scriptName: SearchIncidentsV2
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '52'
+    scriptarguments:
+      query:
+        simple: type:"${inputs.TuningIncidentType}" and -status:Closed and name:"TUNING REVIEW - ${incident.name}"
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 1340,
+          "y": 5825
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '52':
+    id: '52'
+    taskid: 76ad684d-9268-5fc7-ab2c-3c8bd1ccab63
+    type: condition
+    task:
+      id: 76ad684d-9268-5fc7-ab2c-3c8bd1ccab63
+      version: -1
+      name: TUNE - TICKET EXISTS?
+      description: |-
+        STAGE 5 - ACT. Existing ticket means link and increment. No ticket means draft the
+        summary and raise one.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'YES':
+      - '53'
+      '#default#':
+      - '56'
+    conditions:
+    - label: 'YES'
+      condition:
+      - - operator: isNotEmpty
+          left:
+            value:
+              simple: foundIncidents.id
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1340,
+          "y": 6000
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '53':
+    id: '53'
+    taskid: 43b71381-b5ec-5c89-8f01-f192522a096b
+    type: regular
+    task:
+      id: 43b71381-b5ec-5c89-8f01-f192522a096b
+      version: -1
+      name: TUNE - LINK TO TICKET
+      description: |-
+        STAGE 5 - ACT. Links this occurrence to the existing tuning ticket so detection
+        engineering can see every instance from one place.
+      script: Builtin|||linkIncidents
+      type: regular
+      iscommand: true
+      brand: Builtin
+    nexttasks:
+      '#none#':
+      - '54'
+    scriptarguments:
+      incidentId:
+        simple: ${foundIncidents.id}
+      linkedIncidentIDs:
+        simple: ${incident.id}
+      action:
+        simple: link
+    separatecontext: false
+    timeout: 120
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 1340,
+          "y": 6175
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '54':
+    id: '54'
+    taskid: e6e10341-3ff0-5f7f-b8b4-9dc4229ba5c2
+    type: regular
+    task:
+      id: e6e10341-3ff0-5f7f-b8b4-9dc4229ba5c2
+      version: -1
+      name: TUNE - INCREMENT COUNTER
+      description: |-
+        STAGE 5 - ACT. Bumps the occurrence counter on the tuning ticket so its noisiness is
+        visible without opening every linked incident.
+      script: Builtin|||setIncident
+      type: regular
+      iscommand: true
+      brand: Builtin
+    nexttasks:
+      '#none#':
+      - '55'
+    scriptarguments:
+      id:
+        simple: ${foundIncidents.id}
+      tuningoccurrencecount:
+        simple: ${RecurrenceCount}
+    separatecontext: false
+    timeout: 120
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 1340,
+          "y": 6350
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '55':
+    id: '55'
+    taskid: 440537a1-631c-5fd3-b23f-0a94895cf4f2
+    type: regular
+    task:
+      id: 440537a1-631c-5fd3-b23f-0a94895cf4f2
+      version: -1
+      name: TUNE - SET TICKET EXISTING
+      description: |-
+        STAGE 5 - ACT. Records that a tuning ticket was already open. Only used when
+        AutoCloseRecurring is on, to justify a FalsePositive close.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '62'
+    scriptarguments:
+      key:
+        simple: Triage.TuningExisting
+      value:
+        simple: 'true'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1340,
+          "y": 6525
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '56':
+    id: '56'
+    taskid: 22e3ce00-3d73-5361-a34b-9510f0cdce51
+    type: regular
+    task:
+      id: 22e3ce00-3d73-5361-a34b-9510f0cdce51
+      version: -1
+      name: TUNE - SET DEFAULT TUNING SUMMARY
+      description: |-
+        STAGE 5 - ACT. Default first, so a failed AI call still leaves the ticket body valid
+        rather than reading an unwritten key.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '57'
+    scriptarguments:
+      key:
+        simple: Triage.TuningSummary
+      value:
+        simple: AI tuning summary unavailable. See the linked occurrences and Investigation results.
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1770,
+          "y": 6175
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '57':
+    id: '57'
+    taskid: 2224feeb-d371-5b96-980a-f29b7ae38f9a
+    type: regular
+    task:
+      id: 2224feeb-d371-5b96-980a-f29b7ae38f9a
+      version: -1
+      name: TUNE - AI TUNING SUMMARY
+      description: |-
+        STAGE 5 - ACT. Drafts the tuning summary and an advisory KQL exclusion from the
+        investigation counters. Advisory text only. Nothing is written to the analytics rule.
+      script: '[NOMIOS UK] Azure Open AI Service|||azure-openai-send-message'
+      type: regular
+      iscommand: true
+      brand: '[NOMIOS UK] Azure Open AI Service'
+    nexttasks:
+      '#none#':
+      - '58'
+      '#error#':
+      - '60'
+    scriptarguments:
+      using:
+        simple: ${inputs.AIInstance}
+      message:
+        simple: |-
+          OUTPUT TYPE: SUMMARY. JSON with a single key 'Summary'.
+
+          TUNING REQUEST. Draft a short tuning summary and a suggested KQL exclusion.
+          State clearly that the exclusion is advisory and must be reviewed before use.
+
+          CANONICAL INCIDENT: ${CanonicalIncident}
+          FINGERPRINT: ${CanonicalIncident.fingerprint}
+          ENTITIES: ${ExtractedEntities}
+          INVESTIGATION SUMMARY: ${Investigation.Summary}
+          OCCURRENCES IN LAST ${inputs.RecurrenceLookbackDays} DAYS: ${RecurrenceCount}
+    separatecontext: false
+    timeout: 300
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 1770,
+          "y": 6350
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '58':
+    id: '58'
+    taskid: ea11d0e2-4b8b-564f-ba59-a73abe0dd701
+    type: regular
+    task:
+      id: ea11d0e2-4b8b-564f-ba59-a73abe0dd701
+      version: -1
+      name: TUNE - PARSE TUNING RESPONSE
+      description: |-
+        STAGE 5 - ACT. Parses the AI response. A non-JSON response takes the error path and
+        the ticket is raised with the default summary.
+      scriptName: LoadJSON
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '59'
+      '#error#':
+      - '60'
+    scriptarguments:
+      input:
+        simple: ${AzureOpenAI.Analysis.Result}
+    separatecontext: false
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 1770,
+          "y": 6525
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '59':
+    id: '59'
+    taskid: 95c52da1-7fc5-5ec3-ad61-69db0224d365
+    type: regular
+    task:
+      id: 95c52da1-7fc5-5ec3-ad61-69db0224d365
+      version: -1
+      name: TUNE - SET TUNING SUMMARY
+      description: |-
+        STAGE 5 - ACT. Overwrites the default with the parsed summary, in its own key so the
+        escalate path can clear the AI context without losing it.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '60'
+    scriptarguments:
+      key:
+        simple: Triage.TuningSummary
+      value:
+        simple: ${JsonObject.Summary}
+    separatecontext: false
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 1770,
+          "y": 6700
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '60':
+    id: '60'
+    taskid: 8663b683-3307-5a4e-b835-e8ad41e788e4
+    type: regular
+    task:
+      id: 8663b683-3307-5a4e-b835-e8ad41e788e4
+      version: -1
+      name: TUNE - RAISE TICKET
+      description: |-
+        STAGE 5 - ACT. One ticket per rule. TuningIncidentType must not have this playbook as
+        its default or tuning tickets triage themselves recursively.
+      script: Builtin|||createNewIncident
+      type: regular
+      iscommand: true
+      brand: Builtin
+    nexttasks:
+      '#none#':
+      - '61'
+    scriptarguments:
+      name:
+        simple: TUNING REVIEW - ${incident.name}
+      type:
+        simple: ${inputs.TuningIncidentType}
+      severity:
+        simple: '1'
+      tuningoccurrencecount:
+        simple: ${RecurrenceCount}
+      triagefingerprint:
+        simple: ${CanonicalIncident.fingerprint}
+      details:
+        simple: |-
+          Recurring detection flagged for tuning review by GENERIC HANDLER - PARENT - UKDEV.
+
+          Rule: ${incident.name}
+          Fingerprint: ${CanonicalIncident.fingerprint}
+          Occurrences in last ${inputs.RecurrenceLookbackDays} days: ${RecurrenceCount}
+          Threshold: ${inputs.RecurrenceThreshold}
+          Source incident: ${incident.id}
+
+          TUNING SUMMARY (ADVISORY, REVIEW BEFORE USE):
+          ${Triage.TuningSummary}
+
+          INVESTIGATION SUMMARY:
+          ${Investigation.Summary}
+
+          ENTITIES: ${ExtractedEntities}
+    separatecontext: false
+    timeout: 180
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 1770,
+          "y": 6875
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '61':
+    id: '61'
+    taskid: bfcfb0a9-d0c4-5526-b960-dff43fc9b178
+    type: regular
+    task:
+      id: bfcfb0a9-d0c4-5526-b960-dff43fc9b178
+      version: -1
+      name: TUNE - SET TICKET NEW
+      description: |-
+        STAGE 5 - ACT. First ticket for this rule. Blocks the FalsePositive auto-close, because
+        nobody has looked at the tuning request yet.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '62'
+    scriptarguments:
+      key:
+        simple: Triage.TuningExisting
+      value:
+        simple: 'false'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1770,
+          "y": 7050
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '62':
+    id: '62'
+    taskid: 73c1212c-ac7c-581f-96de-314787a2d43f
+    type: condition
+    task:
+      id: 73c1212c-ac7c-581f-96de-314787a2d43f
+      version: -1
+      name: ACT - RECURRING OUTCOME?
+      description: |-
+        STAGE 5 - ACT. Default is escalate, which is the shipped behaviour. AUTO-CLOSE only
+        fires when AutoCloseRecurring is on, severity is low and a tuning ticket is already open.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      AUTO-CLOSE:
+      - '63'
+      '#default#':
+      - '75'
+    conditions:
+    - label: AUTO-CLOSE
+      condition:
+      - - operator: isTrue
+          left:
+            value:
+              simple: inputs.AutoCloseRecurring
+            iscontext: true
+          right:
+            value: {}
+        - operator: isTrue
+          left:
+            value:
+              simple: Triage.Signal.LowSeverity
+            iscontext: true
+          right:
+            value: {}
+        - operator: isTrue
+          left:
+            value:
+              simple: Triage.TuningExisting
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 1340,
+          "y": 7225
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '63':
+    id: '63'
+    taskid: e99751e8-5433-5da0-b94a-4e1d4f8231b0
+    type: title
+    task:
+      id: e99751e8-5433-5da0-b94a-4e1d4f8231b0
+      version: -1
+      name: ACT - AUTO CLOSE
+      description: |-
+        STAGE 5 - ACT. Reached on low severity with no threat intel hit, or on a recurrence
+        when AutoCloseRecurring is on. Never closes without a parsed closing note.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '64'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 7400
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '64':
+    id: '64'
+    taskid: d2a0b7bf-5ff3-575c-b867-4d1a69fde8a5
+    type: regular
+    task:
+      id: d2a0b7bf-5ff3-575c-b867-4d1a69fde8a5
+      version: -1
+      name: ACT - AI CLOSING NOTE
+      description: |-
+        STAGE 5 - ACT. Short closing-note prompt. Receives the investigation counters so the
+        note says what was checked, not just what the alert claimed.
+      script: '[NOMIOS UK] Azure Open AI Service|||azure-openai-send-message'
+      type: regular
+      iscommand: true
+      brand: '[NOMIOS UK] Azure Open AI Service'
+    nexttasks:
+      '#none#':
+      - '65'
+      '#error#':
+      - '75'
+    scriptarguments:
+      using:
+        simple: ${inputs.AIInstance}
+      message:
+        simple: |-
+          OUTPUT TYPE: CLOSING NOTE. JSON with a single key 'Summary'.
+
+          Write a closing note for a low severity alert that automated triage is closing.
+          State what was checked and why it does not warrant analyst time.
+
+          CANONICAL INCIDENT: ${CanonicalIncident}
+          ENTITIES WITH GTI VERDICTS: ${IncidentIndicators}
+          INVESTIGATION SUMMARY: ${Investigation.Summary}
+          SEEN IN OTHER INCIDENTS: ${foundIndicators(val.investigationIDs && val.investigationIDs.length > 1).value}
+    separatecontext: false
+    timeout: 300
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 7575
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '65':
+    id: '65'
+    taskid: 890ef22b-27cf-577e-84e1-fb31e914310e
+    type: regular
+    task:
+      id: 890ef22b-27cf-577e-84e1-fb31e914310e
+      version: -1
+      name: ACT - PARSE CLOSING RESPONSE
+      description: |-
+        STAGE 5 - ACT. Parses the AI response. Anything that is not JSON takes the error path
+        and escalates. Never auto-close blind.
+      scriptName: LoadJSON
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '66'
+      '#error#':
+      - '75'
+    scriptarguments:
+      input:
+        simple: ${AzureOpenAI.Analysis.Result}
+    separatecontext: false
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 7750
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '66':
+    id: '66'
+    taskid: 8c3e8a08-416d-5985-8f49-34e53effe3ad
+    type: condition
+    task:
+      id: 8c3e8a08-416d-5985-8f49-34e53effe3ad
+      version: -1
+      name: ACT - HAS CLOSING NOTE?
+      description: |-
+        STAGE 5 - ACT. Strict guard. A parsed object without a Summary key escalates rather
+        than closing with an empty note.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'NO':
+      - '75'
+      '#default#':
+      - '67'
+    conditions:
+    - label: 'NO'
+      condition:
+      - - operator: isEmpty
+          left:
+            value:
+              simple: JsonObject.Summary
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 7925
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '67':
+    id: '67'
+    taskid: 8fdb315f-72d6-546d-920c-3ca4b7dba536
+    type: regular
+    task:
+      id: 8fdb315f-72d6-546d-920c-3ca4b7dba536
+      version: -1
+      name: ACT - SET NARRATIVE CLOSE
+      description: |-
+        STAGE 5 - ACT. Same Triage.Narrative key every consumer reads. Also writes closeNotes
+        and the AI Summary field.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '68'
+    scriptarguments:
+      key:
+        simple: Triage.Narrative
+      value:
+        simple: ${JsonObject.Summary}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 8100
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: closeNotes
+      output:
+        simple: ${Triage.Narrative}
+    - incidentfield: AI Summary
+      output:
+        simple: ${Triage.Narrative}
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '68':
+    id: '68'
+    taskid: 35c17d08-64bd-5a3f-a29e-d13a59a0297a
+    type: condition
+    task:
+      id: 35c17d08-64bd-5a3f-a29e-d13a59a0297a
+      version: -1
+      name: ACT - DERIVE CLASSIFICATION
+      description: |-
+        STAGE 5 - ACT. Classification comes from the matrix signals, not from the Undetermined
+        default. Sentinel gets a real reason for the close.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      BENIGN:
+      - '69'
+      FALSE-POSITIVE:
+      - '71'
+      '#default#':
+      - '73'
+    conditions:
+    - label: FALSE-POSITIVE
+      condition:
+      - - operator: isTrue
+          left:
+            value:
+              simple: Triage.Signal.Recurring
+            iscontext: true
+          right:
+            value: {}
+    - label: BENIGN
+      condition:
+      - - operator: isFalse
+          left:
+            value:
+              simple: Triage.Signal.ThreatIntel
+            iscontext: true
+          right:
+            value: {}
+        - operator: isTrue
+          left:
+            value:
+              simple: Triage.Signal.LowSeverity
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 8275
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '69':
+    id: '69'
+    taskid: aa74822f-af73-571d-a4b6-25f5300c44f9
+    type: regular
+    task:
+      id: aa74822f-af73-571d-a4b6-25f5300c44f9
+      version: -1
+      name: ACT - SET CLASSIFICATION BENIGN
+      description: STAGE 5 - ACT. Not recurring, no threat intel hit, low severity.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '70'
+    scriptarguments:
+      key:
+        simple: Triage.Classification
+      value:
+        simple: BenignPositive
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 8450
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '70':
+    id: '70'
+    taskid: 891a7820-2e0c-57cd-8b96-4d61287a40c6
+    type: regular
+    task:
+      id: 891a7820-2e0c-57cd-8b96-4d61287a40c6
+      version: -1
+      name: ACT - SET REASON BENIGN
+      description: STAGE 5 - ACT. Sentinel requires a reason alongside BenignPositive.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '74'
+    scriptarguments:
+      key:
+        simple: Triage.ClassificationReason
+      value:
+        simple: SuspiciousButExpected
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 8625
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '71':
+    id: '71'
+    taskid: bcc0db24-c9f2-5fc8-a60a-97b3182d00e2
+    type: regular
+    task:
+      id: bcc0db24-c9f2-5fc8-a60a-97b3182d00e2
+      version: -1
+      name: ACT - SET CLASSIFICATION FALSE POSITIVE
+      description: |-
+        STAGE 5 - ACT. Recurring with an open tuning ticket. Only reachable when
+        AutoCloseRecurring is on.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '72'
+    scriptarguments:
+      key:
+        simple: Triage.Classification
+      value:
+        simple: FalsePositive
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 2200,
+          "y": 8450
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '72':
+    id: '72'
+    taskid: 4c301ecc-e7aa-5b1f-b5cc-8e505fe8492a
+    type: regular
+    task:
+      id: 4c301ecc-e7aa-5b1f-b5cc-8e505fe8492a
+      version: -1
+      name: ACT - SET REASON FALSE POSITIVE
+      description: STAGE 5 - ACT. Sentinel requires a reason alongside FalsePositive.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '74'
+    scriptarguments:
+      key:
+        simple: Triage.ClassificationReason
+      value:
+        simple: IncorrectAlertLogic
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 2200,
+          "y": 8625
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '73':
+    id: '73'
+    taskid: fabb455a-4a2e-58da-8afd-52724920c996
+    type: title
+    task:
+      id: fabb455a-4a2e-58da-8afd-52724920c996
+      version: -1
+      name: ACT - KEEP CLASSIFICATION UNDETERMINED
+      description: |-
+        STAGE 5 - ACT. Signals did not justify a specific classification. The SETUP defaults
+        of Undetermined and UNSET stand.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '74'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 2630,
+          "y": 8450
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '74':
+    id: '74'
+    taskid: 1d39cc34-79e7-5e6a-90e8-1a7f4dae148e
+    type: regular
+    task:
+      id: 1d39cc34-79e7-5e6a-90e8-1a7f4dae148e
+      version: -1
+      name: ACT - SET DISPOSITION AUTO-CLOSED
+      description: STAGE 5 - ACT. Records the outcome and maps it to the Triage Disposition field.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '85'
+    scriptarguments:
+      key:
+        simple: Triage.Disposition
+      value:
+        simple: AUTO-CLOSED
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 8800
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: Triage Disposition
+      output:
+        simple: ${Triage.Disposition}
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '75':
+    id: '75'
+    taskid: 16807553-7bad-5f22-a8d6-5d354a5616fa
+    type: title
+    task:
+      id: 16807553-7bad-5f22-a8d6-5d354a5616fa
+      version: -1
+      name: ACT - ESCALATE
+      description: |-
+        STAGE 5 - ACT. Analyst path. Reached from a threat intel hit, the matrix default, a
+        recurrence, or auto-close failing to produce a closing note.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '76'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 8975
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '76':
+    id: '76'
+    taskid: 011ab327-2da0-52b0-9bfb-eff6a750e959
+    type: regular
+    task:
+      id: 011ab327-2da0-52b0-9bfb-eff6a750e959
+      version: -1
+      name: ACT - CLEAR AI CONTEXT
+      description: |-
+        STAGE 5 - ACT. The recurring and auto-close paths may already have called the AI.
+        Clearing stops the second response appending to the first.
+      scriptName: DeleteContext
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '77'
+    scriptarguments:
+      key:
+        simple: AzureOpenAI,JsonObject
+      subplaybook:
+        simple: auto
+    separatecontext: false
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 9150
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '77':
+    id: '77'
+    taskid: ec9b2120-7d6b-5fa0-86ba-d93b151fc6b5
+    type: condition
+    task:
+      id: ec9b2120-7d6b-5fa0-86ba-d93b151fc6b5
+      version: -1
+      name: ACT - PROMPT DEPTH SELECT
+      description: |-
+        STAGE 5 - ACT. Canonical 1 to 3 get the full investigation-led prompt. Canonical 4 gets
+        the short one, matching the depth the ingest adapter actually ran.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      FULL:
+      - '78'
+      '#default#':
+      - '79'
+    conditions:
+    - label: FULL
+      condition:
+      - - operator: inList
+          left:
+            value:
+              simple: CanonicalIncident.severity
+            iscontext: true
+          right:
+            value:
+              simple: ${inputs.FullInvestigationSeverities}
+            iscontext: true
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 9325
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '78':
+    id: '78'
+    taskid: 2f0eb2fc-3f70-541a-9d85-bfda396b6188
+    type: regular
+    task:
+      id: 2f0eb2fc-3f70-541a-9d85-bfda396b6188
+      version: -1
+      name: ACT - AI SUMMARY FULL
+      description: |-
+        STAGE 5 - ACT. Investigation-led summary. Receives Investigation in full so the
+        narrative describes what the queries found, not what the alert title claimed.
+      script: '[NOMIOS UK] Azure Open AI Service|||azure-openai-send-message'
+      type: regular
+      iscommand: true
+      brand: '[NOMIOS UK] Azure Open AI Service'
+    nexttasks:
+      '#none#':
+      - '80'
+      '#error#':
+      - '83'
+    scriptarguments:
+      using:
+        simple: ${inputs.AIInstance}
+      message:
+        simple: |-
+          OUTPUT TYPE: SUMMARY in MARKDOWN. JSON with a single key 'Summary'.
+
+          Lead with what the automated investigation found. Then the entities and their
+          reputation. Then prevalence and recurrence. Finish with what the analyst should
+          do next. If Investigation.Errors is non-empty, say which checks did not run.
+
+          CANONICAL INCIDENT: ${CanonicalIncident}
+          ENTITIES WITH GTI VERDICTS: ${IncidentIndicators}
+          AUTOMATED INVESTIGATION: ${Investigation}
+          SEEN IN OTHER INCIDENTS: ${foundIndicators(val.investigationIDs && val.investigationIDs.length > 1).value}
+          RECURRENCE: ${RecurrenceCount} prior incidents with the same fingerprint in ${inputs.RecurrenceLookbackDays} days.
+    separatecontext: false
+    timeout: 300
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 9500
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '79':
+    id: '79'
+    taskid: b6eacb43-db68-5a0e-a2fd-3e35f2c04ff6
+    type: regular
+    task:
+      id: b6eacb43-db68-5a0e-a2fd-3e35f2c04ff6
+      version: -1
+      name: ACT - AI SUMMARY BRIEF
+      description: |-
+        STAGE 5 - ACT. Short summary for canonical 4, where only the light investigation ran.
+        Same output contract so downstream parsing is identical.
+      script: '[NOMIOS UK] Azure Open AI Service|||azure-openai-send-message'
+      type: regular
+      iscommand: true
+      brand: '[NOMIOS UK] Azure Open AI Service'
+    nexttasks:
+      '#none#':
+      - '80'
+      '#error#':
+      - '83'
+    scriptarguments:
+      using:
+        simple: ${inputs.AIInstance}
+      message:
+        simple: |-
+          OUTPUT TYPE: SUMMARY in MARKDOWN. JSON with a single key 'Summary'.
+
+          Keep it to a short paragraph and a next step.
+
+          CANONICAL INCIDENT: ${CanonicalIncident}
+          ENTITIES WITH GTI VERDICTS: ${IncidentIndicators}
+          INVESTIGATION SUMMARY: ${Investigation.Summary}
+          RECURRENCE: ${RecurrenceCount} in ${inputs.RecurrenceLookbackDays} days.
+    separatecontext: false
+    timeout: 300
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 9500
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '80':
+    id: '80'
+    taskid: 3b3a5827-48d8-53a5-8f35-3fe0870a4f7c
+    type: regular
+    task:
+      id: 3b3a5827-48d8-53a5-8f35-3fe0870a4f7c
+      version: -1
+      name: ACT - PARSE AI RESPONSE
+      description: |-
+        STAGE 5 - ACT. Parses the AI response into JsonObject.Summary. A non-JSON response
+        takes the error path to the deterministic fallback.
+      scriptName: LoadJSON
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '81'
+      '#error#':
+      - '83'
+    scriptarguments:
+      input:
+        simple: ${AzureOpenAI.Analysis.Result}
+    separatecontext: false
+    continueonerrortype: errorPath
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 9675
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '81':
+    id: '81'
+    taskid: fa9b6c92-7355-53ac-8a94-e05b2156473e
+    type: condition
+    task:
+      id: fa9b6c92-7355-53ac-8a94-e05b2156473e
+      version: -1
+      name: ACT - HAS SUMMARY?
+      description: |-
+        STAGE 5 - ACT. Strict guard. A parsed object with no Summary key falls back rather
+        than handing SYNC an empty comment.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      'NO':
+      - '83'
+      '#default#':
+      - '82'
+    conditions:
+    - label: 'NO'
+      condition:
+      - - operator: isEmpty
+          left:
+            value:
+              simple: JsonObject.Summary
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 9850
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '82':
+    id: '82'
+    taskid: 36ac265b-1cba-5243-88f1-383feea6005e
+    type: regular
+    task:
+      id: 36ac265b-1cba-5243-88f1-383feea6005e
+      version: -1
+      name: ACT - SET NARRATIVE
+      description: |-
+        STAGE 5 - ACT. Triage.Narrative is the one key every consumer reads: the AI Summary
+        field here and the SYNC comment later.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '84'
+    scriptarguments:
+      key:
+        simple: Triage.Narrative
+      value:
+        simple: ${JsonObject.Summary}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 10025
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: AI Summary
+      output:
+        simple: ${Triage.Narrative}
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '83':
+    id: '83'
+    taskid: 2d6de847-46b1-5918-bf2c-b1a200d2aff7
+    type: regular
+    task:
+      id: 2d6de847-46b1-5918-bf2c-b1a200d2aff7
+      version: -1
+      name: ACT - BUILD FALLBACK NARRATIVE
+      description: |-
+        STAGE 5 - ACT. Deterministic narrative assembled from the canonical object, the
+        indicators and the investigation counters. SYNC is never called with an empty comment.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '84'
+    scriptarguments:
+      key:
+        simple: Triage.Narrative
+      value:
+        simple: |-
+          AI summary unavailable for this incident (see War Room). Escalated for analyst review.
+
+          Title: ${CanonicalIncident.title}
+          Canonical severity (1 critical to 4 informational): ${CanonicalIncident.severity}
+          Indicators: ${IncidentIndicators.Count}
+          Threat intel hit: ${Triage.Signal.ThreatIntel}
+          Recurrence in window: ${RecurrenceCount}
+
+          AUTOMATED INVESTIGATION SUMMARY:
+          ${Investigation.Summary}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 10025
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: AI Summary
+      output:
+        simple: ${Triage.Narrative}
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '84':
+    id: '84'
+    taskid: 7fe5c6f3-774c-5fec-aa78-2cccc5044ef2
+    type: regular
+    task:
+      id: 7fe5c6f3-774c-5fec-aa78-2cccc5044ef2
+      version: -1
+      name: ACT - SET DISPOSITION
+      description: |-
+        STAGE 5 - ACT. ESCALATED or RECURRING, taken from the recurrence signal so the tag and
+        the comment prefix both say which one it was.
+      scriptName: Set
+      type: regular
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '85'
+    scriptarguments:
+      key:
+        simple: Triage.Disposition
+      value:
+        complex:
+          root: Triage.Signal.Recurring
+          transformers:
+          - operator: replace
+            args:
+              toReplace:
+                value:
+                  simple: 'true'
+              replaceWith:
+                value:
+                  simple: RECURRING
+              limit: {}
+          - operator: replace
+            args:
+              toReplace:
+                value:
+                  simple: 'false'
+              replaceWith:
+                value:
+                  simple: ESCALATED
+              limit: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 10200
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    fieldMapping:
+    - incidentfield: Triage Disposition
+      output:
+        simple: ${Triage.Disposition}
+    skipunavailable: false
+    quietmode: 2
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '85':
+    id: '85'
+    taskid: a3493829-971e-542d-aba2-2dc6781f3152
+    type: condition
+    task:
+      id: a3493829-971e-542d-aba2-2dc6781f3152
+      version: -1
+      name: ACT - SYNC SELECT
+      description: |-
+        STAGE 5 - ACT. Picks the write-back adapter from Triage.Source, a canonical token, not
+        a vendor context path. Sources without an adapter skip write-back.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      SENTINEL:
+      - '86'
+      '#default#':
+      - '87'
+    conditions:
+    - label: SENTINEL
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: Triage.Source
+            iscontext: true
+          right:
+            value:
+              simple: SENTINEL
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 10375
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '86':
+    id: '86'
+    taskid: e3d9b347-27ba-53bb-bd15-bde54721914b
+    type: playbook
+    task:
+      id: e3d9b347-27ba-53bb-bd15-bde54721914b
+      version: -1
+      name: ACT - RUN SENTINEL SYNC
+      description: |-
+        STAGE 5 - ACT. One SYNC call per incident, on every outcome including MANUAL-REVIEW.
+        Continue on error: a write-back problem never fails triage.
+      playbookName: SYNC - SENTINEL - UKDEV
+      type: playbook
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '87'
+    scriptarguments:
+      Comment:
+        simple: ${Triage.Narrative}
+      Disposition:
+        simple: ${Triage.Disposition}
+      Classification:
+        simple: ${Triage.Classification}
+      ClassificationReason:
+        simple: ${Triage.ClassificationReason}
+      RunId:
+        simple: ${Triage.RunId}
+      MarkActiveOnEscalate:
+        simple: ${inputs.MarkActiveOnEscalate}
+      OwnerUPN:
+        simple: ${inputs.OwnerUPN}
+      Tags:
+        simple: ${inputs.SyncTags}
+    separatecontext: false
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 10550
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '87':
+    id: '87'
+    taskid: c58c7fcc-3823-59ae-aa87-c97e6b2400ed
+    type: condition
+    task:
+      id: c58c7fcc-3823-59ae-aa87-c97e6b2400ed
+      version: -1
+      name: ACT - CLOSE OR HAND OVER?
+      description: |-
+        STAGE 5 - ACT. Auto-closed incidents close here, after SYNC, so the source system is
+        updated before the XSOAR investigation shuts.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      CLOSE:
+      - '88'
+      '#default#':
+      - '89'
+    conditions:
+    - label: CLOSE
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: Triage.Disposition
+            iscontext: true
+          right:
+            value:
+              simple: AUTO-CLOSED
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 10725
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '88':
+    id: '88'
+    taskid: 628c174c-ee9d-5be6-aa5a-386da23bb9ad
+    type: regular
+    task:
+      id: 628c174c-ee9d-5be6-aa5a-386da23bb9ad
+      version: -1
+      name: ACT - CLOSE INCIDENT
+      description: |-
+        STAGE 5 - ACT. Closes with the generated note. A close reason is mandatory here,
+        otherwise Sentinel-side mirroring of the close cannot work.
+      script: Builtin|||closeInvestigation
+      type: regular
+      iscommand: true
+      brand: Builtin
+    scriptarguments:
+      closeNotes:
+        simple: ${Triage.Narrative}
+      closeReason:
+        simple: Resolved
+    separatecontext: false
+    timeout: 120
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 10900
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '89':
+    id: '89'
+    taskid: 1e565bc5-01ba-52ed-973a-d3ffae8e33ac
+    type: title
+    task:
+      id: 1e565bc5-01ba-52ed-973a-d3ffae8e33ac
+      version: -1
+      name: AWAITING ANALYST
+      description: STAGE 5 - ACT. Incident is now with the SOC. Post-triage handling continues below.
+      type: title
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '90'
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 10900
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '90':
+    id: '90'
+    taskid: abe02977-9b30-586b-8f55-87246ccea966
+    type: playbook
+    task:
+      id: abe02977-9b30-586b-8f55-87246ccea966
+      version: -1
+      name: POST - INVESTIGATION DECISION
+      description: POST-TRIAGE. Carried over unchanged from v77. Analyst decision sub-playbook.
+      playbookName: INVESTIGATION DECISION - UKDEV
+      type: playbook
+      iscommand: false
+      brand: ''
+    nexttasks:
+      '#none#':
+      - '91'
+    loop:
+      iscommand: false
+      exitCondition: ''
+      wait: 1
+      max: 100
+    separatecontext: true
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 11075
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '91':
+    id: '91'
+    taskid: 0182fe2e-01b3-5511-9682-8be3d6dce2e9
+    type: condition
+    task:
+      id: 0182fe2e-01b3-5511-9682-8be3d6dce2e9
+      version: -1
+      name: POST - RAISE SALESFORCE TICKET?
+      description: |-
+        POST-TRIAGE. Carried over unchanged from v77. Keys on the closure reason set by the
+        decision sub-playbook.
+      type: condition
+      iscommand: false
+      brand: ''
+    nexttasks:
+      REMEDIATE:
+      - '92'
+      '#default#':
+      - '93'
+    conditions:
+    - label: REMEDIATE
+      condition:
+      - - operator: isNotEmpty
+          left:
+            value:
+              simple: incident.closurereason
+            iscontext: true
+          right:
+            value: {}
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 11250
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '92':
+    id: '92'
+    taskid: e22f1f1d-d428-5adf-b93e-cdb597c44285
+    type: playbook
+    task:
+      id: e22f1f1d-d428-5adf-b93e-cdb597c44285
+      version: -1
+      name: POST - GENERAL COMMUNICATION
+      description: POST-TRIAGE. Carried over unchanged from v77.
+      playbookName: General Communication V2 - Shared
+      type: playbook
+      iscommand: false
+      brand: ''
+    loop:
+      iscommand: false
+      exitCondition: ''
+      wait: 1
+      max: 100
+    separatecontext: true
+    continueonerrortype: continue
+    continueonerror: true
+    view: |-
+      {
+        "position": {
+          "x": 480,
+          "y": 11425
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  '93':
+    id: '93'
+    taskid: b5a4f3dd-531a-5f97-a494-badc25306fca
+    type: title
+    task:
+      id: b5a4f3dd-531a-5f97-a494-badc25306fca
+      version: -1
+      name: POST - SYNC CLOSURE REASON
+      description: |-
+        POST-TRIAGE. Placeholder. Task 86 in v77 had no script assigned and would have failed
+        on execution. Left as a title until you say what it should call.
+      type: title
+      iscommand: false
+      brand: ''
+    separatecontext: false
+    continueonerrortype: ''
+    view: |-
+      {
+        "position": {
+          "x": 910,
+          "y": 11425
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 11625,
+        "width": 3440,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs:
+- key: LogAnalyticsInstance
+  value:
+    simple: WC_Tyrell_SoC_LAW
+  required: true
+  description: Azure Log Analytics instance for this customer workspace. Passed to the ingest adapter.
+  playbookInputQuery: null
+- key: AIInstance
+  value:
+    simple: FOUNDRY-POC-TP
+  required: true
+  description: Azure OpenAI instance used for summaries, closing notes and tuning summaries.
+  playbookInputQuery: null
+- key: AutoCloseSeverities
+  value:
+    simple: 3,4
+  required: true
+  description: 'Canonical severity values eligible for auto-close. Scale: 1 Critical, 2 High, 3 Medium,
+    4 Informational.'
+  playbookInputQuery: null
+- key: FullInvestigationSeverities
+  value:
+    simple: 1,2,3
+  required: true
+  description: Canonical severities that get the full investigation-led AI prompt. Others get the short
+    closing-note prompt.
+  playbookInputQuery: null
+- key: RecurrenceLookbackDays
+  value:
+    simple: '7'
+  required: true
+  description: Lookback in days when counting prior incidents with the same triage fingerprint.
+  playbookInputQuery: null
+- key: RecurrenceThreshold
+  value:
+    simple: '3'
+  required: true
+  description: Prior occurrences within the window at which the incident is treated as RECURRING.
+  playbookInputQuery: null
+- key: EnrichWaitSeconds
+  value:
+    simple: '20'
+  required: true
+  description: Pause between enrichIndicators and re-reading verdicts so DBot scores have settled.
+  playbookInputQuery: null
+- key: TuningIncidentType
+  value:
+    simple: Tuning Request
+  required: true
+  description: Incident type for tuning review tickets. Must NOT have this playbook as its default or
+    recurring incidents recurse.
+  playbookInputQuery: null
+- key: AutoCloseRecurring
+  value:
+    simple: 'false'
+  required: true
+  description: OFF BY DEFAULT. When true, low-severity recurrences that already have an open tuning ticket
+    auto-close as FalsePositive instead of escalating.
+  playbookInputQuery: null
+- key: MarkActiveOnEscalate
+  value:
+    simple: 'true'
+  required: true
+  description: Passed to the sync adapter. When false the source incident status is left alone and only
+    a comment is posted.
+  playbookInputQuery: null
+- key: OwnerUPN
+  value: {}
+  required: false
+  description: Optional. UPN of the XSOAR service principal to set as owner on the source incident.
+  playbookInputQuery: null
+- key: SyncTags
+  value:
+    simple: XSOAR-Triaged
+  required: true
+  description: Comma-separated tags applied to the source incident on write-back.
+  playbookInputQuery: null
+outputs:
+- contextPath: CanonicalIncident
+  description: Vendor-neutral canonical incident object.
+  type: unknown
+- contextPath: IncidentIndicators
+  description: Enriched indicators linked to this incident.
+  type: unknown
+- contextPath: Investigation
+  description: Distilled automated investigation results from the ingest adapter.
+  type: unknown
+- contextPath: RecurrenceCount
+  description: Prior incidents with the same fingerprint in the lookback window.
+  type: number
+- contextPath: Triage.Disposition
+  description: ESCALATED, RECURRING, AUTO-CLOSED or MANUAL-REVIEW.
+  type: string
+- contextPath: Triage.Narrative
+  description: Narrative written to the incident and posted to the source SIEM.
+  type: string
+fromversion: 6.10.0
